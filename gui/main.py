@@ -140,11 +140,84 @@ class Particle:
                               (self.size, self.size), self.size)
             surface.blit(temp_surface, (int(self.x - self.size), int(self.y - self.size)))
 
+class PassNotification:
+    def __init__(self, bot_name, x, y):
+        self.bot_name = bot_name
+        self.x = x
+        self.y = y
+        self.start_time = pygame.time.get_ticks()
+        self.duration = 1500  # Show for 1.5 seconds
+        self.active = True
+        self.scale = 0
+        
+    def update(self):
+        current_time = pygame.time.get_ticks()
+        elapsed = current_time - self.start_time
+        self.active = elapsed < self.duration
+        
+        # Animation progress (0 to 1 to 0)
+        if elapsed < 500:  # Fade in
+            self.scale = elapsed / 500
+        elif elapsed > 1000:  # Fade out
+            self.scale = 1 - ((elapsed - 1000) / 500)
+        else:  # Hold
+            self.scale = 1
+            
+        return self.active
+    
+    def draw(self, screen):
+        if not self.active:
+            return
+        
+        # Create notification background with rounded corners
+        notification_width = 200
+        notification_height = 60
+        notification_x = self.x - notification_width // 2
+        notification_y = self.y - notification_height // 2
+        
+        # Background with shadow
+        pygame.draw.rect(screen, (0, 0, 0, 100), 
+                        (notification_x + 3, notification_y + 3, notification_width, notification_height), 
+                        border_radius=10)
+        
+        # Notification background
+        pygame.draw.rect(screen, (30, 40, 60, 230), 
+                        (notification_x, notification_y, notification_width, notification_height), 
+                        border_radius=10)
+        
+        # Gold border
+        pygame.draw.rect(screen, (255, 215, 0), 
+                        (notification_x, notification_y, notification_width, notification_height), 
+                        3, border_radius=10)
+        
+        # Bot name text
+        font = pygame.font.SysFont("arial", 16, bold=True)
+        name_text = font.render(f"{self.bot_name}", True, (255, 215, 0))
+        screen.blit(name_text, (self.x - name_text.get_width() // 2, notification_y + 10))
+        
+        # PASS text with animation
+        pass_font = pygame.font.SysFont("arial", 24, bold=True)
+        pass_text = pass_font.render("PASSED!", True, (255, 100, 100))
+        
+        # Scale the "PASSED!" text during animation
+        scaled_width = int(pass_text.get_width() * self.scale)
+        scaled_height = int(pass_text.get_height() * self.scale)
+        if scaled_width > 0 and scaled_height > 0:
+            scaled_pass = pygame.transform.scale(pass_text, (scaled_width, scaled_height))
+            screen.blit(scaled_pass, 
+                       (self.x - scaled_width // 2, notification_y + 35 - scaled_height // 2))
+        
+        # Optional: Add a pass icon
+        icon_font = pygame.font.SysFont("arial", 20)
+        icon_text = icon_font.render("⏭️", True, (255, 255, 255))
+        screen.blit(icon_text, (notification_x + 10, notification_y + 20))
+
 # -------------------- INIT GAME --------------------
 game = Game()
 selected_indexes = []
 animations = []
 particles = []
+pass_notifications = []  # For bot pass notifications
 
 current_player = 0
 winner_of_current_round = None
@@ -155,8 +228,13 @@ game_over = False
 # Button rectangles
 play_button_rect = pygame.Rect(WIDTH - 250, HEIGHT - 70, BUTTON_WIDTH, BUTTON_HEIGHT)
 pass_button_rect = pygame.Rect(WIDTH - 120, HEIGHT - 70, BUTTON_WIDTH, BUTTON_HEIGHT)
+restart_button_rect = pygame.Rect(WIDTH - 250, 30, BUTTON_WIDTH, BUTTON_HEIGHT)  # New restart button
 
 # -------------------- HELPER FUNCTIONS --------------------
+
+def add_log(log_type, message):
+    """Add message to console log"""
+    print(f"[{log_type.upper()}] {message}")
 
 def draw_hand(player):
     """Draw player's hand with enhanced visuals"""
@@ -318,10 +396,31 @@ def draw_current_play():
     elif has_two:
         two_label = FONT.render("CONTAINS 2!", True, (255, 255, 100))
         screen.blit(two_label, (WIDTH // 2 + 30, separator_y + 10))
+
 def draw_buttons():
     """Draw enhanced buttons with hover effects"""
     mouse_pos = pygame.mouse.get_pos()
     current_time = pygame.time.get_ticks()
+    
+    # Restart Button (only show when game is over)
+    if game_over:
+        restart_hover = restart_button_rect.collidepoint(mouse_pos)
+        restart_color = BUTTON_HOVER if restart_hover else BUTTON_COLOR
+        
+        # Draw restart button
+        shadow_rect = restart_button_rect.move(4, 4)
+        draw_rounded_rect(screen, shadow_rect, (0, 0, 0, 100), 12)
+        
+        draw_rounded_rect(screen, restart_button_rect, restart_color, 10)
+        
+        border_color = (255, 255, 255) if restart_hover else (200, 200, 200)
+        draw_rounded_rect(screen, restart_button_rect, border_color, 10, 2, border_color)
+        
+        restart_text = FONT.render("RESTART", True, (255, 255, 255))
+        text_shadow = FONT.render("RESTART", True, (0, 0, 0, 150))
+        text_rect = restart_text.get_rect(center=restart_button_rect.center)
+        screen.blit(text_shadow, text_rect.move(2, 2))
+        screen.blit(restart_text, text_rect)
     
     # Play Button
     play_hover = play_button_rect.collidepoint(mouse_pos) and current_player == 0 and not game_over
@@ -508,6 +607,7 @@ def draw_game_status():
         draw_rounded_rect(screen, bg_rect, (40, 40, 40, 180), 8)
         
         screen.blit(turn_surface, text_rect)
+
 def draw_game_over():
     """Draw game over screen"""
     if not any(player.has_won() for player in game.players):
@@ -600,7 +700,28 @@ def get_card_index_at_pos(pos, player):
             return i
     return None
 
-# In the process_player_turn function, around line 617:
+def restart_game():
+    """Restart the game completely"""
+    global game, selected_indexes, animations, particles, pass_notifications
+    global current_player, winner_of_current_round, is_new_round, last_play_time, game_over
+    global bot_thinking, last_bot_turn_time
+    
+    # Create new game
+    game = Game()
+    selected_indexes = []
+    animations = []
+    particles = []
+    pass_notifications = []  # Clear notifications
+    current_player = 0
+    winner_of_current_round = None
+    is_new_round = True
+    game_over = False
+    bot_thinking = False
+    last_bot_turn_time = 0
+    
+    print("Game restarted!")
+    add_log('system', "Game restarted!")
+
 def process_player_turn():
     """Process human player's turn"""
     global selected_indexes, winner_of_current_round, is_new_round, game_over
@@ -635,7 +756,6 @@ def process_player_turn():
         return False
     
     # Check if this is a bomb
-        # Check if this is a bomb
     play_type = get_play_type(selected_cards)
     is_bomb = play_type in ["quadruple", "consecutive_pairs"] and len(selected_cards) >= 4
     
@@ -756,6 +876,11 @@ while running:
         if not anim.active:
             animations.remove(anim)
     
+    # Update and draw pass notifications
+    pass_notifications = [n for n in pass_notifications if n.update()]
+    for notification in pass_notifications:
+        notification.draw(screen)
+    
     # Draw game elements
     draw_table()
     draw_current_play()
@@ -779,15 +904,7 @@ while running:
                 running = False
             elif event.key == pygame.K_SPACE and game_over:
                 # Restart game
-                game = Game()
-                selected_indexes = []
-                animations = []
-                particles = []
-                current_player = 0
-                winner_of_current_round = None
-                is_new_round = True
-                game_over = False
-                bot_thinking = False
+                restart_game()
             elif event.key == pygame.K_h and current_player == 0:  # Hint key
                 print("\n=== HINT ===")
                 print(f"Your hand: {[str(c) for c in game.players[0].hand]}")
@@ -826,7 +943,12 @@ while running:
         
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if game_over:
-                continue
+                # Check restart button
+                if restart_button_rect.collidepoint(event.pos):
+                    restart_game()
+                    continue
+                else:
+                    continue
                 
             if current_player == 0:
                 # Play button
@@ -871,7 +993,7 @@ while running:
                             selected_indexes.append(idx)
                             print(f"Selected card {idx}: {game.players[0].hand[idx]}")
     
-       # -------------------- BOT TURN PROCESSING --------------------
+    # -------------------- BOT TURN PROCESSING --------------------
     if not game_over and current_player != 0 and not bot_thinking:
         # Start bot thinking
         bot_thinking = True
@@ -931,15 +1053,22 @@ while running:
                 print("💣 BOMB PLAYED! 💣")
             elif len(play) > 0:
                 create_celebration_particles(WIDTH // 2, 150, 10)
-            
-            # Check win
-            if bot.has_won():
-                print(f"🎉 {bot.name} WINS!")
-                create_celebration_particles(WIDTH // 2, HEIGHT // 2, 50)
-                game_over = True
         else:
             print(f"{bot.name} passes")
             game.pass_count += 1
+            
+            # Create pass notification
+            # Position based on bot index
+            bot_positions = [
+                (WIDTH // 4, HEIGHT // 4),      # Bot 1 (top-left)
+                (3 * WIDTH // 4, HEIGHT // 4),  # Bot 2 (top-right)
+                (WIDTH // 4, 3 * HEIGHT // 4),  # Bot 3 (bottom-left)
+            ]
+            bot_index = current_player - 1  # Bot index (0-2)
+            if bot_index < 3:
+                x, y = bot_positions[bot_index]
+                pass_notifications.append(PassNotification(bot.name, x, y))
+        
         # IMPORTANT FIX: Check if all others passed
         if game.pass_count == len(game.players) - 1:
             print("All passed. New round!")
@@ -963,5 +1092,6 @@ while running:
     
     pygame.display.flip()
     clock.tick(60)
+
 pygame.quit()
 sys.exit()

@@ -1,10 +1,12 @@
-# web_app.py
+# web_app.py - FIXED VERSION (prevents server crashes)
 from flask import Flask, render_template, request, session, jsonify
 import os
 import json
 import random
 import pickle
 import base64
+import sys
+import traceback
 from core.game import Game
 from core.player import Player
 from core.card import Card
@@ -12,6 +14,24 @@ from core.rules import beats, is_valid_play, get_play_type, card_strength
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+
+# -----------------------------
+# Global exception handler
+# -----------------------------
+
+def handle_exception(e):
+    """Global exception handler to prevent server crashes"""
+    print(f"💥 UNHANDLED EXCEPTION: {type(e).__name__}: {e}")
+    traceback.print_exc()
+    return jsonify({
+        'success': False,
+        'error': f'Server error: {str(e)}'
+    }), 500
+
+# Register the error handler
+@app.errorhandler(Exception)
+def handle_all_exceptions(e):
+    return handle_exception(e)
 
 # -----------------------------
 # Helper functions
@@ -66,26 +86,25 @@ def serialize_game_state(game):
     if not game:
         return None
     
-    # Find human player (first player named "You" or renamed)
-    human_player = game.players[0]  # First player is always human in your Game class
-    
-    # Try to determine whose turn it is
-    # In your game, the first player typically starts
-    is_player_turn = False
-    current_player_name = None
-    
-    # Simple turn tracking for now
-    # We'll track turn in session
-    if 'current_player_index' not in session:
-        session['current_player_index'] = 0  # Human starts
-    
+    # Get current player index
     current_player_index = session.get('current_player_index', 0)
+    
+    # Safety check - ensure index is valid
+    if not game.players or current_player_index >= len(game.players):
+        current_player_index = 0
+        session['current_player_index'] = 0
+    
+    current_player = game.players[current_player_index] if game.players else None
+    
+    # Determine if it's player's turn (player index 0)
     is_player_turn = (current_player_index == 0)
-    current_player_name = game.players[current_player_index].name if game.players else None
+    
+    # Find human player (first player)
+    human_player = game.players[0] if game.players else None
     
     return {
         'is_player_turn': is_player_turn,
-        'current_player': current_player_name,
+        'current_player': current_player.name if current_player else None,
         'game_over': game.is_game_over(),
         'players': [
             {
@@ -94,12 +113,12 @@ def serialize_game_state(game):
                 'has_won': p.has_won()
             } for p in game.players
         ],
-        'player_hand': [serialize_card(c) for c in human_player.hand],
+        'player_hand': [serialize_card(c) for c in human_player.hand] if human_player else [],
         'last_play': serialize_play(game.last_play) if game.last_play else None,
         'round_plays': [],
         'summary': {
             'round': game.round_number,
-            'current_player_cards': len(human_player.hand)
+            'current_player_cards': len(human_player.hand) if human_player else 0
         },
         'winner': game.get_winner().name if game.get_winner() else None
     }
@@ -119,6 +138,36 @@ def serialize_play(play_cards):
         'is_pass': False
     }
 
+def advance_turn():
+    """Advance to next player's turn, skipping players who have won"""
+    if 'current_player_index' not in session:
+        session['current_player_index'] = 0
+    
+    game = get_game()
+    if not game:
+        return False
+    
+    max_attempts = len(game.players) * 2  # Prevent infinite loop
+    attempts = 0
+    
+    while attempts < max_attempts:
+        # Move to next player
+        session['current_player_index'] = (session['current_player_index'] + 1) % len(game.players)
+        current_index = session['current_player_index']
+        
+        # Check if current player has won AND if game is still ongoing
+        if not game.players[current_index].has_won() or game.is_game_over():
+            # Found a player who hasn't won OR game is over
+            save_game(game)
+            return True
+        
+        attempts += 1
+    
+    # If all players have won (shouldn't happen), reset to player 0
+    session['current_player_index'] = 0
+    save_game(game)
+    return True
+
 # -----------------------------
 # Routes
 # -----------------------------
@@ -126,6 +175,11 @@ def serialize_play(play_cards):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/favicon.ico')
+def favicon():
+    """Handle favicon requests to prevent 404 errors"""
+    return '', 404
 
 # -----------------------------
 # API Endpoints
@@ -163,7 +217,6 @@ def api_start_game():
         
     except Exception as e:
         print(f"Error in start_game: {str(e)}")
-        import traceback
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -184,6 +237,10 @@ def api_get_state():
         if 'current_player_index' not in session:
             session['current_player_index'] = 0
         
+        # Safety check - ensure index is valid
+        if session['current_player_index'] >= len(game.players):
+            session['current_player_index'] = 0
+        
         return jsonify({
             'success': True,
             'state': serialize_game_state(game)
@@ -191,24 +248,11 @@ def api_get_state():
         
     except Exception as e:
         print(f"Error in get_state: {str(e)}")
-        import traceback
         traceback.print_exc()
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
-
-def advance_turn():
-    """Advance to next player's turn"""
-    if 'current_player_index' not in session:
-        session['current_player_index'] = 0
-    
-    game = get_game()
-    if game:
-        session['current_player_index'] = (session['current_player_index'] + 1) % len(game.players)
-        save_game(game)
-        return True
-    return False
 
 @app.route('/api/play_cards', methods=['POST'])
 def api_play_cards():
@@ -221,6 +265,13 @@ def api_play_cards():
             return jsonify({
                 'success': False,
                 'error': 'No game found'
+            })
+        
+        # Check if game is over
+        if game.is_game_over():
+            return jsonify({
+                'success': False,
+                'error': 'Game is already over'
             })
         
         # Check if it's player's turn
@@ -303,8 +354,9 @@ def api_play_cards():
             if len(human_player.hand) == 0:
                 print(f"🎉 {human_player.name} won the game!")
             
-            # Advance turn
-            advance_turn()
+            # Advance turn if game is not over
+            if not game.is_game_over():
+                advance_turn()
             
             message = f"{human_player.name} played {' '.join(str(c) for c in play_cards)}"
         
@@ -319,7 +371,6 @@ def api_play_cards():
         
     except Exception as e:
         print(f"Error in play_cards: {str(e)}")
-        import traceback
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -334,6 +385,13 @@ def api_pass_turn():
             return jsonify({
                 'success': False,
                 'error': 'No game found'
+            })
+        
+        # Check if game is over
+        if game.is_game_over():
+            return jsonify({
+                'success': False,
+                'error': 'Game is already over'
             })
         
         # Check if it's player's turn
@@ -357,8 +415,9 @@ def api_pass_turn():
             for player in game.players:
                 player.has_passed = False
         
-        # Advance turn
-        advance_turn()
+        # Advance turn if game is not over
+        if not game.is_game_over():
+            advance_turn()
         
         message = f"{human_player.name} passed."
         
@@ -373,7 +432,6 @@ def api_pass_turn():
         
     except Exception as e:
         print(f"Error in pass_turn: {str(e)}")
-        import traceback
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -390,8 +448,22 @@ def api_bot_move():
                 'error': 'No game found'
             })
         
-        # Check if it's a bot's turn
+        # Check if game is over
+        if game.is_game_over():
+            return jsonify({
+                'success': False,
+                'error': 'Game is already over'
+            })
+        
+        # Get current player index from session
         current_player_index = session.get('current_player_index', 0)
+        
+        # Safety check - ensure index is valid
+        if current_player_index >= len(game.players):
+            current_player_index = 0
+            session['current_player_index'] = 0
+        
+        # Check if it's a bot's turn (indices 1, 2, 3 are bots)
         if current_player_index == 0:
             return jsonify({
                 'success': False,
@@ -402,23 +474,31 @@ def api_bot_move():
         
         print(f"Bot {bot.name} is playing...")
         
-        # Let bot play
-        bot_play = game.bot_turn(bot)
-        
-        if bot_play:
-            message = f"{bot.name} played {' '.join(str(c) for c in bot_play)}"
-            # Reset pass count since bot played
-            game.pass_count = 0
+        # Check if bot has already won
+        if bot.has_won():
+            message = f"{bot.name} has already won"
+            is_pass = False
         else:
-            message = f"{bot.name} passed"
-            game.pass_count += 1
+            # Let bot play
+            bot_play = game.bot_turn(bot)
             
-            if game.pass_count >= 3:  # All players passed
-                game.reset_round()
+            if bot_play:
+                message = f"{bot.name} played {' '.join(str(c) for c in bot_play)}"
+                # Reset pass count since bot played
                 game.pass_count = 0
+                is_pass = False
+            else:
+                message = f"{bot.name} passed"
+                game.pass_count += 1
+                is_pass = True
+                
+                if game.pass_count >= 3:  # All players passed
+                    game.reset_round()
+                    game.pass_count = 0
         
-        # Advance turn
-        advance_turn()
+        # Advance turn ONLY if game is not over
+        if not game.is_game_over():
+            advance_turn()
         
         print(f"Bot move result: {message}")
         
@@ -428,12 +508,48 @@ def api_bot_move():
         return jsonify({
             'success': True,
             'message': message,
+            'is_pass': is_pass,
             'state': serialize_game_state(game)
         })
         
     except Exception as e:
         print(f"Error in bot_move: {str(e)}")
-        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/restart_game', methods=['POST'])
+def api_restart_game():
+    try:
+        data = request.get_json()
+        player_name = data.get('player_name', 'You')
+        
+        # Clear the current game from session
+        session.pop('game_data', None)
+        session.pop('current_player_index', None)
+        
+        # Create a new game
+        game = Game()
+        game.players[0].name = player_name
+        session['current_player_index'] = 0
+        
+        # Save game to session
+        save_game(game)
+        
+        print(f"Game restarted for {player_name}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Game restarted successfully',
+            'session_id': id(game),
+            'game_id': id(game),
+            'state': serialize_game_state(game)
+        })
+        
+    except Exception as e:
+        print(f"Error in restart_game: {str(e)}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -483,7 +599,6 @@ def api_get_valid_plays():
         
     except Exception as e:
         print(f"Error in get_valid_plays: {str(e)}")
-        import traceback
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -508,6 +623,7 @@ def internal_error(error):
 if __name__ == '__main__':
     print("🎮 Tien Len Mien Nam Server Starting...")
     print("🌐 Server running at: http://localhost:5000")
+    print("🔒 Server includes crash protection and restart functionality")
     print("📁 Make sure you have:")
     print("   - cards.js in /static directory")
     print("   - index.html in /templates directory")

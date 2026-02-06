@@ -325,6 +325,14 @@
             background: linear-gradient(145deg, #D69E2E, #B7791F);
         }
 
+        .btn-restart {
+            background: linear-gradient(145deg, #D69E2E, #B7791F);
+        }
+
+        .btn-restart:hover:not(:disabled) {
+            background: linear-gradient(145deg, #ED8936, #DD6B20);
+        }
+
         .btn i {
             font-size: 1.2em;
         }
@@ -454,6 +462,43 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.4); }
+        }
+
+        /* === NEW ANIMATIONS === */
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes robotBounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(-5deg); }
+            75% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(1000px) rotate(360deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+            top: -10px;
+            animation: confetti-fall 3s linear infinite;
+        }
+
         .log-entry.player {
             border-left-color: #3182CE;
         }
@@ -535,19 +580,8 @@
             animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
         .glow {
             animation: glow 1.5s infinite alternate;
-        }
-
-        @keyframes glow {
-            from { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
-            to { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.4); }
         }
 
         /* Responsive design */
@@ -626,6 +660,11 @@
                 <div class="controls-grid">
                     <button class="btn btn-start" onclick="showStartModal()" id="btnStart">
                         <i class="fas fa-play-circle"></i> Start New Game
+                    </button>
+                    
+                    <!-- NEW RESTART BUTTON -->
+                    <button class="btn btn-restart" onclick="restartGame()" id="btnRestart" disabled>
+                        <i class="fas fa-redo"></i> Restart Game
                     </button>
                     
                     <button class="btn btn-hint" onclick="showHints()" id="btnHint" disabled>
@@ -743,8 +782,12 @@
             cardRects: [],
             hoveredCard: -1,
             animations: [],
-            botAnimations: [], // NEW: For bot play animations
-            isProcessingBotMove: false
+            botAnimations: [],
+            isProcessingBotMove: false,
+            hasShownWinCelebration: false,  // FIX: Track if win celebration shown
+            botPassNotifications: new Set(), // FIX: Track bot pass notifications
+            botTurnDelay: 1500,              // FIX: Delay between bot turns
+            botTurnTimeout: null             // FIX: Timeout for bot turns
         };
 
         // ============ DEBUG FUNCTIONS ============
@@ -759,6 +802,8 @@
             console.log("Card rects count:", gameState.cardRects.length);
             console.log("Last play:", gameState.lastPlay);
             console.log("Bot animations:", gameState.botAnimations.length);
+            console.log("Has shown win celebration:", gameState.hasShownWinCelebration);
+            console.log("Bot pass notifications:", Array.from(gameState.botPassNotifications));
             console.log("=======================");
         }
 
@@ -849,6 +894,456 @@
                 
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                console.log("Audio not supported");
+            }
+        }
+
+        // Bot pass notification function - FIXED: Prevents duplicates
+        function showBotPassNotification(botName) {
+            // Check if there's already a notification for this bot
+            const existingNotification = document.querySelector(`.bot-pass-notification[data-bot="${botName}"]`);
+            if (existingNotification) {
+                return; // Don't show duplicate
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'bot-pass-notification';
+            notification.setAttribute('data-bot', botName); // Mark which bot this is for
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 20, 40, 0.95);
+                color: white;
+                padding: 20px 40px;
+                border-radius: 15px;
+                border: 3px solid #FF6B6B;
+                font-size: 24px;
+                font-weight: bold;
+                z-index: 1000;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                animation: popInOut 2s ease-in-out forwards;
+                pointer-events: none;
+            `;
+            
+            notification.innerHTML = `
+                <div style="color: #FF6B6B; font-size: 28px; margin-bottom: 10px;">
+                    <i class="fas fa-forward"></i>
+                </div>
+                <div>${botName}</div>
+                <div style="color: #FFD700; font-size: 32px; margin-top: 10px;">PASSED!</div>
+            `;
+            
+            // Add to document
+            document.body.appendChild(notification);
+            
+            // Remove after animation
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+                // Remove from tracking set after animation completes
+                gameState.botPassNotifications.delete(botName);
+            }, 2000);
+        }
+
+        // Add CSS animation for the notification
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes popInOut {
+                0% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.5);
+                }
+                20% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1.1);
+                }
+                30% {
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                70% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.5);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Show player win celebration - FIXED: Only shows once
+        function showPlayerWinCelebration() {
+            // Check if already showing
+            if (document.getElementById('winCelebration')) {
+                return;
+            }
+            
+            // Create celebration overlay
+            const celebration = document.createElement('div');
+            celebration.id = 'winCelebration';
+            celebration.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                z-index: 2000;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                animation: fadeIn 0.5s ease-out;
+            `;
+            
+            celebration.innerHTML = `
+                <div style="
+                    text-align: center;
+                    color: white;
+                    padding: 40px;
+                    background: linear-gradient(145deg, rgba(255, 215, 0, 0.2), rgba(212, 175, 55, 0.3));
+                    border-radius: 20px;
+                    border: 5px solid #FFD700;
+                    max-width: 600px;
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+                    position: relative;
+                    overflow: hidden;
+                ">
+                    <!-- Confetti background -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none;">
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                    </div>
+                    
+                    <div style="font-size: 80px; margin-bottom: 20px; animation: bounce 1s infinite;">
+                        🏆
+                    </div>
+                    
+                    <h1 style="color: #FFD700; font-size: 48px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">
+                        VICTORY!
+                    </h1>
+                    
+                    <div style="font-size: 32px; margin-bottom: 30px; color: #4ECDC4;">
+                        You are the Tien Len Master! 🎉
+                    </div>
+                    
+                    <div style="font-size: 18px; margin-bottom: 40px; color: #E2E8F0;">
+                        Congratulations! You've outplayed all the bots and won the game!
+                    </div>
+                    
+                    <div style="display: flex; gap: 20px; margin-top: 30px;">
+                        <button onclick="restartGame()" style="
+                            background: linear-gradient(145deg, #38A169, #2F855A);
+                            color: white;
+                            border: none;
+                            padding: 15px 30px;
+                            border-radius: 10px;
+                            font-size: 18px;
+                            font-weight: bold;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                            transition: all 0.3s;
+                        ">
+                            <i class="fas fa-redo"></i> Play Again
+                        </button>
+                        
+                        <button onclick="hideWinCelebration()" style="
+                            background: linear-gradient(145deg, #E53E3E, #C53030);
+                            color: white;
+                            border: none;
+                            padding: 15px 30px;
+                            border-radius: 10px;
+                            font-size: 18px;
+                            font-weight: bold;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                            transition: all 0.3s;
+                        ">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 30px; font-size: 14px; color: #A0AEC0;">
+                        <i class="fas fa-trophy"></i> You've proven your Tien Len skills!
+                    </div>
+                </div>
+            `;
+            
+            // Add CSS animations for confetti
+            const winStyle = document.createElement('style');
+            winStyle.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                
+                @keyframes bounce {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-20px); }
+                }
+                
+                @keyframes confetti-fall {
+                    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+                    100% { transform: translateY(1000px) rotate(360deg); opacity: 0; }
+                }
+                
+                .confetti {
+                    position: absolute;
+                    width: 10px;
+                    height: 10px;
+                    background: #FFD700;
+                    top: -10px;
+                    animation: confetti-fall 3s linear infinite;
+                }
+                
+                .confetti:nth-child(1) { left: 10%; animation-delay: 0s; background: #FF6B6B; }
+                .confetti:nth-child(2) { left: 30%; animation-delay: 0.5s; background: #4ECDC4; }
+                .confetti:nth-child(3) { left: 50%; animation-delay: 1s; background: #FFD700; }
+                .confetti:nth-child(4) { left: 70%; animation-delay: 1.5s; background: #95E1D3; }
+                .confetti:nth-child(5) { left: 90%; animation-delay: 2s; background: #FF8E53; }
+            `;
+            
+            document.head.appendChild(winStyle);
+            document.body.appendChild(celebration);
+            
+            // Play victory sound
+            playVictorySound();
+        }
+
+        // Show bot win announcement - FIXED: Only shows once
+        function showBotWinCelebration(botName) {
+            // Check if already showing
+            if (document.getElementById('botWinCelebration')) {
+                return;
+            }
+            
+            // Create bot win overlay
+            const celebration = document.createElement('div');
+            celebration.id = 'botWinCelebration';
+            celebration.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                z-index: 2000;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                animation: fadeIn 0.5s ease-out;
+            `;
+            
+            celebration.innerHTML = `
+                <div style="
+                    text-align: center;
+                    color: white;
+                    padding: 40px;
+                    background: linear-gradient(145deg, rgba(229, 62, 62, 0.2), rgba(197, 48, 48, 0.3));
+                    border-radius: 20px;
+                    border: 5px solid #E53E3E;
+                    max-width: 600px;
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+                    position: relative;
+                    overflow: hidden;
+                ">
+                    <!-- Robot animation -->
+                    <div style="font-size: 80px; margin-bottom: 20px; animation: robotBounce 1s infinite;">
+                        🤖
+                    </div>
+                    
+                    <h1 style="color: #E53E3E; font-size: 48px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(229, 62, 62, 0.5);">
+                        ${botName} WINS!
+                    </h1>
+                    
+                    <div style="font-size: 32px; margin-bottom: 30px; color: #FF6B6B;">
+                        Better luck next time! 💔
+                    </div>
+                    
+                    <div style="font-size: 18px; margin-bottom: 40px; color: #E2E8F0;">
+                        ${botName} has outsmarted you this time. The AI prevails!
+                    </div>
+                    
+                    <div style="
+                        background: rgba(0, 0, 0, 0.3);
+                        padding: 20px;
+                        border-radius: 10px;
+                        margin-bottom: 30px;
+                        border-left: 4px solid #4ECDC4;
+                    ">
+                        <div style="font-size: 16px; color: #A0AEC0; margin-bottom: 10px;">
+                            <i class="fas fa-robot"></i> AI Victory Analysis:
+                        </div>
+                        <div style="font-size: 14px; color: #CBD5E0;">
+                            • Strategic card play<br>
+                            • Effective bomb usage<br>
+                            • Smart passing decisions
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 20px; margin-top: 20px;">
+                        <button onclick="restartGame()" style="
+                            background: linear-gradient(145deg, #D69E2E, #B7791F);
+                            color: white;
+                            border: none;
+                            padding: 15px 30px;
+                            border-radius: 10px;
+                            font-size: 18px;
+                            font-weight: bold;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                            transition: all 0.3s;
+                        ">
+                            <i class="fas fa-redo"></i> Try Again
+                        </button>
+                        
+                        <button onclick="hideBotWinCelebration()" style="
+                            background: linear-gradient(145deg, #2D3748, #4A5568);
+                            color: white;
+                            border: none;
+                            padding: 15px 30px;
+                            border-radius: 10px;
+                            font-size: 18px;
+                            font-weight: bold;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                            transition: all 0.3s;
+                        ">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 30px; font-size: 14px; color: #A0AEC0;">
+                        <i class="fas fa-lightbulb"></i> Tip: Watch how bots play to improve your strategy!
+                    </div>
+                </div>
+            `;
+            
+            // Add CSS animations
+            const botStyle = document.createElement('style');
+            botStyle.textContent += `
+                @keyframes robotBounce {
+                    0%, 100% { transform: translateY(0) rotate(0deg); }
+                    25% { transform: translateY(-10px) rotate(-5deg); }
+                    75% { transform: translateY(-10px) rotate(5deg); }
+                }
+            `;
+            
+            document.head.appendChild(botStyle);
+            document.body.appendChild(celebration);
+            
+            // Play bot win sound
+            playBotWinSound();
+        }
+
+        // Hide win celebrations
+        function hideWinCelebration() {
+            const celebration = document.getElementById('winCelebration');
+            if (celebration) {
+                celebration.style.animation = 'fadeOut 0.5s ease-out';
+                setTimeout(() => celebration.remove(), 500);
+            }
+        }
+
+        function hideBotWinCelebration() {
+            const celebration = document.getElementById('botWinCelebration');
+            if (celebration) {
+                celebration.style.animation = 'fadeOut 0.5s ease-out';
+                setTimeout(() => celebration.remove(), 500);
+            }
+        }
+
+        // Add fadeOut animation to existing style or create new
+        function addFadeOutAnimation() {
+            if (!document.getElementById('fadeOutStyle')) {
+                const style = document.createElement('style');
+                style.id = 'fadeOutStyle';
+                style.textContent = `
+                    @keyframes fadeOut {
+                        from { opacity: 1; }
+                        to { opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        // Sound effects
+        function playVictorySound() {
+            try {
+                // Create victory sound
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Play a victory fanfare
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                let time = audioContext.currentTime;
+                
+                notes.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = frequency;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0, time);
+                    gainNode.gain.linearRampToValueAtTime(0.2, time + 0.1);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+                    
+                    oscillator.start(time);
+                    oscillator.stop(time + 0.5);
+                    
+                    time += 0.15; // Stagger the notes
+                });
+            } catch (e) {
+                console.log("Audio not supported");
+            }
+        }
+
+        function playBotWinSound() {
+            try {
+                // Create robotic defeat sound
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 349.23; // F4
+                oscillator.type = 'sawtooth';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 1);
             } catch (e) {
                 console.log("Audio not supported");
             }
@@ -1355,6 +1850,9 @@
                     gameState.sessionId = data.session_id;
                     gameState.gameId = data.game_id;
                     
+                    // Reset win celebration flag
+                    gameState.hasShownWinCelebration = false;
+                    
                     addLog('system', `Welcome, ${playerName}! Game started.`);
                     addLog('system', 'Good luck! You are playing against 3 AI bots.');
                     
@@ -1377,7 +1875,7 @@
             }
         }
 
-        // Update game state - FIXED VERSION
+        // Update game state - FIXED VERSION (with proper bot turn sequencing)
         async function updateGameState() {
             console.log("🔄 updateGameState called");
             
@@ -1389,6 +1887,16 @@
             try {
                 console.log(`📡 Fetching state for session: ${gameState.sessionId}`);
                 const response = await fetch(`/api/get_state?session_id=${gameState.sessionId}`);
+                
+                // Check if server is responding
+                if (!response.ok) {
+                    if (response.status === 0 || response.status >= 500) {
+                        console.error("🚨 Server appears to be down!");
+                        addLog('system', '⚠️ Server connection lost. Try restarting the game.');
+                        return;
+                    }
+                }
+                
                 const data = await response.json();
                 
                 console.log("📊 Raw API response:", data);
@@ -1429,18 +1937,35 @@
                         });
                     }
                     
-                    // Check for winner
-                    if (state.winner) {
+                    // Check for winner - FIXED: Only show once
+                    if (state.winner && !gameState.hasShownWinCelebration) {
                         addLog('winner', `🎉 ${state.winner} wins the game! 🎉`);
                         disableGameControls();
+                        
+                        // Mark that we've shown the celebration
+                        gameState.hasShownWinCelebration = true;
+                        
+                        // Show celebration based on who won
+                        setTimeout(() => {
+                            if (state.winner.includes('You') || state.winner.includes('Player')) {
+                                showPlayerWinCelebration();
+                            } else {
+                                showBotWinCelebration(state.winner);
+                            }
+                        }, 1000); // Wait 1 second before showing celebration
                     }
                     
-                    // FIXED: Process bot moves if it's bot's turn and game isn't over
+                    // FIXED: Process bot moves with proper sequencing
                     if (!gameState.isPlayerTurn && !gameState.gameOver && gameState.currentPlayer && 
                         gameState.currentPlayer.includes('Bot') && !gameState.isProcessingBotMove) {
                         
-                        // Process bot move after a short delay
-                        setTimeout(async () => {
+                        // Clear any existing timeout
+                        if (gameState.botTurnTimeout) {
+                            clearTimeout(gameState.botTurnTimeout);
+                        }
+                        
+                        // Process bot move after a delay
+                        gameState.botTurnTimeout = setTimeout(async () => {
                             try {
                                 gameState.isProcessingBotMove = true;
                                 
@@ -1456,6 +1981,20 @@
                                 console.log("🤖 Bot move response:", data);
                                 
                                 if (data.success) {
+                                    // Check if bot passed - SHOW NOTIFICATION (with duplicate check)
+                                    if (data.message && data.message.includes('passed')) {
+                                        // Check if we haven't already shown notification for this bot
+                                        if (!gameState.botPassNotifications.has(gameState.currentPlayer)) {
+                                            // Show bot pass notification
+                                            showBotPassNotification(gameState.currentPlayer);
+                                            // Mark that we've shown it
+                                            gameState.botPassNotifications.add(gameState.currentPlayer);
+                                        }
+                                    } else {
+                                        // Bot played cards, clear pass notifications for next round
+                                        gameState.botPassNotifications.clear();
+                                    }
+                                    
                                     // Try to extract cards from message for animation
                                     const message = data.message || '';
                                     if (message.includes('played')) {
@@ -1475,20 +2014,20 @@
                                             setTimeout(() => {
                                                 gameState.isProcessingBotMove = false;
                                                 updateGameState();
-                                            }, 1000); // Wait 1 second for animation
+                                            }, 1000);
                                         } else {
-                                            // No animation, just update
+                                            // No animation, just update after delay
                                             setTimeout(() => {
                                                 gameState.isProcessingBotMove = false;
                                                 updateGameState();
                                             }, 800);
                                         }
                                     } else {
-                                        // Bot passed or no play
+                                        // Bot passed or no play - add delay before next update
                                         setTimeout(() => {
                                             gameState.isProcessingBotMove = false;
                                             updateGameState();
-                                        }, 800);
+                                        }, gameState.botTurnDelay);
                                     }
                                     
                                     // Add log for bot's play
@@ -1496,16 +2035,28 @@
                                 } else {
                                     console.error("❌ Bot move failed:", data.error);
                                     gameState.isProcessingBotMove = false;
+                                    // Still update state after delay
+                                    setTimeout(() => updateGameState(), gameState.botTurnDelay);
                                 }
                             } catch (error) {
                                 console.error('Error processing bot move:', error);
                                 gameState.isProcessingBotMove = false;
+                                // Still update state after delay
+                                setTimeout(() => updateGameState(), gameState.botTurnDelay);
                             }
-                        }, 1500);
+                        }, gameState.botTurnDelay); // Initial delay before bot move
                     }
                 }
             } catch (error) {
                 console.error('Error updating game state:', error);
+                
+                // Check if it's a connection error
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    console.error("🚨 Server connection failed!");
+                    addLog('system', '⚠️ Cannot connect to server. The server may have crashed.');
+                } else {
+                    addLog('system', `Error: ${error.message}`);
+                }
             }
         }
 
@@ -1534,6 +2085,11 @@
                 // Remove pulsing animation
                 btnPlay.classList.remove('play');
                 btnPass.classList.remove('pass');
+            }
+            
+            // Enable restart button if game has started
+            if (gameState.sessionId) {
+                document.getElementById('btnRestart').disabled = false;
             }
         }
 
@@ -1751,14 +2307,98 @@
             hintsModal.style.display = 'none';
         }
 
-        // Add log entry
+        // Restart game function - FIXED: Clears all state properly
+        async function restartGame() {
+            // Hide any open celebrations
+            hideWinCelebration();
+            hideBotWinCelebration();
+            
+            // Reset the celebration flag
+            gameState.hasShownWinCelebration = false;
+            
+            // Clear bot pass notifications
+            gameState.botPassNotifications.clear();
+            
+            // Remove any existing bot pass notifications from DOM
+            document.querySelectorAll('.bot-pass-notification').forEach(el => el.remove());
+            
+            // Clear bot turn timeout
+            if (gameState.botTurnTimeout) {
+                clearTimeout(gameState.botTurnTimeout);
+                gameState.botTurnTimeout = null;
+            }
+            
+            if (!gameState.sessionId) {
+                addLog('system', 'No game to restart');
+                return;
+            }
+            
+            try {
+                const playerName = document.getElementById('playerName').value.trim() || 'Player';
+                
+                const response = await fetch('/api/restart_game', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        player_name: playerName
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addLog('system', 'Game restarted!');
+                    
+                    // Update game state
+                    gameState.sessionId = data.session_id;
+                    gameState.gameId = data.game_id;
+                    
+                    // Clear selections
+                    gameState.selectedCards = [];
+                    updateSelectedCardsDisplay();
+                    
+                    // Update UI
+                    updateGameState();
+                    
+                    // Enable/disable buttons
+                    document.getElementById('btnHint').disabled = false;
+                    document.getElementById('btnRestart').disabled = false;
+                    
+                    // Clear game log except first message
+                    const firstLog = gameLog.firstElementChild;
+                    gameLog.innerHTML = '';
+                    if (firstLog) {
+                        gameLog.appendChild(firstLog);
+                    }
+                    
+                    addLog('system', `Game restarted for ${playerName}`);
+                } else {
+                    addLog('system', `Error restarting: ${data.error}`);
+                }
+            } catch (error) {
+                addLog('system', `Network error: ${error}`);
+            }
+        }
+
+        // Add log entry - FIXED: Highlights bot passes
         function addLog(type, message) {
             const timestamp = new Date().toLocaleTimeString();
             const logEntry = document.createElement('div');
             logEntry.className = `log-entry ${type}`;
-            logEntry.innerHTML = `
-                <span class="log-timestamp">[${timestamp}]</span> ${message}
-            `;
+            
+            // Highlight bot passes
+            if (type === 'bot' && message.includes('passed')) {
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span> 
+                    <span style="color: #FF6B6B; font-weight: bold;">
+                        <i class="fas fa-forward"></i> ${message}
+                    </span>
+                `;
+            } else {
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span> ${message}
+                `;
+            }
             
             gameLog.appendChild(logEntry);
             gameLog.scrollTop = gameLog.scrollHeight;
@@ -1820,7 +2460,10 @@
             // Log that script loaded
             console.log("🎮 Game script loaded successfully");
             console.log("🔧 Debug functions available: debugGameState(), forceMyTurn(), clearSelections()");
-            // =================================================
+            
+            /* === ADD THIS LINE HERE === */
+            addFadeOutAnimation();
+            /* ========================== */
         });
     </script>
 </body>
