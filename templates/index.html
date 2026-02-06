@@ -106,6 +106,7 @@
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
+            cursor: pointer;
         }
 
         canvas {
@@ -196,8 +197,8 @@
         /* UPDATED: Side action buttons next to hand */
         .side-controls {
             position: absolute;
-            bottom: 180px; /* Positioned next to the hand */
-            right: 50px; /* Right side of game board */
+            bottom: 180px; /* MOVED 40px HIGHER */
+            right: 30px; /* Right side of game board */
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -561,7 +562,7 @@
             
             .side-controls {
                 right: 20px;
-                bottom: 150px;
+                bottom: 200px;
             }
         }
 
@@ -580,7 +581,7 @@
             
             .side-controls {
                 right: 15px;
-                bottom: 160px;
+                bottom: 200px;
                 padding: 10px;
                 min-width: 120px;
             }
@@ -742,7 +743,8 @@
             cardRects: [],
             hoveredCard: -1,
             animations: [],
-            isProcessingBotMove: false // NEW: Track if bot move is processing
+            botAnimations: [], // NEW: For bot play animations
+            isProcessingBotMove: false
         };
 
         // ============ DEBUG FUNCTIONS ============
@@ -756,6 +758,7 @@
             console.log("Selected cards count:", gameState.selectedCards.length);
             console.log("Card rects count:", gameState.cardRects.length);
             console.log("Last play:", gameState.lastPlay);
+            console.log("Bot animations:", gameState.botAnimations.length);
             console.log("=======================");
         }
 
@@ -771,6 +774,85 @@
             console.log("====================");
         }
         // =========================================
+
+        // Bot animation helper function
+        function createBotAnimation(botName, cardStr) {
+            if (!gameState.ctx || !gameState.canvas) return;
+            
+            // Convert card string to card object
+            const rankMap = {
+                '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+                'J': 11, 'Q': 12, 'K': 13, 'A': 14, '2': 2
+            };
+            
+            // Parse card string (e.g., "3♠", "J♥")
+            let rankPart = cardStr.slice(0, -1);
+            let suit = cardStr.slice(-1);
+            let rank = rankMap[rankPart] || parseInt(rankPart);
+            
+            const card = {
+                rank: rank,
+                suit: suit,
+                display: cardStr
+            };
+            
+            // Get bot position based on bot name
+            const canvasWidth = gameState.canvas.width;
+            const canvasHeight = gameState.canvas.height;
+            let fromX, fromY;
+            
+            if (botName.includes('Bot 1')) {
+                fromX = 70;
+                fromY = 100;
+            } else if (botName.includes('Bot 2')) {
+                fromX = canvasWidth - 280;
+                fromY = 100;
+            } else if (botName.includes('Bot 3')) {
+                fromX = 70;
+                fromY = canvasHeight - 280;
+            } else {
+                // Default position
+                fromX = canvasWidth / 2;
+                fromY = 100;
+            }
+            
+            // Destination (center of play area)
+            const centerX = canvasWidth / 2;
+            const centerY = canvasHeight / 2;
+            const toX = centerX - 30;
+            const toY = centerY - 42;
+            
+            // Create animation
+            const animation = cardRenderer.createBotPlayAnimation(botName, card, fromX, fromY, toX, toY);
+            gameState.botAnimations.push(animation);
+            
+            // Play sound effect
+            playCardSound();
+        }
+
+        // Simple sound effect
+        function playCardSound() {
+            try {
+                // Create a simple beep sound
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 523.25; // C5 note
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                console.log("Audio not supported");
+            }
+        }
 
         // DOM elements
         const gameCanvas = document.getElementById('gameCanvas');
@@ -804,7 +886,7 @@
             requestAnimationFrame(render);
         }
 
-        // Render game - UPDATED WITH BIGGER TABLE
+        // Render game - UPDATED WITH ANIMATIONS
         function render() {
             const ctx = gameState.ctx;
             const canvas = gameState.canvas;
@@ -822,7 +904,7 @@
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
             
             // Draw full rectangular game board with pattern
-            const boardPadding = 20; // Space from canvas edges
+            const boardPadding = 5; // Space from canvas edges
             const boardX = boardPadding;
             const boardY = boardPadding;
             const boardWidth = canvasWidth - (boardPadding * 2);
@@ -875,9 +957,11 @@
             }
 
             // Subtle radial gradient in center
+            const centerX = canvasWidth / 2;
+            const centerY = canvasHeight / 2;
             const centerGradient = ctx.createRadialGradient(
-                canvasWidth / 2, canvasHeight / 2, 50,
-                canvasWidth / 2, canvasHeight / 2, Math.min(boardWidth, boardHeight) / 3
+                centerX, centerY, 50,
+                centerX, centerY, Math.min(boardWidth, boardHeight) / 3
             );
             centerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
             centerGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
@@ -887,8 +971,6 @@
             ctx.restore();
 
             // Draw center highlight circle (optional)
-            const centerX = canvasWidth / 2;
-            const centerY = canvasHeight / 2;
             const highlightRadius = Math.min(boardWidth, boardHeight) * 0.15;
 
             ctx.save();
@@ -900,7 +982,7 @@
             ctx.restore();
             
             // Draw last play if exists
-            if (gameState.lastPlay && gameState.lastPlay.cards) {
+            if (gameState.lastPlay && gameState.lastPlay.cards && gameState.lastPlay.cards.length > 0) {
                 const cards = gameState.lastPlay.cards.map(cardStr => {
                     // Convert card string to card object
                     const suit = cardStr.slice(-1);
@@ -919,12 +1001,12 @@
                 
                 cardRenderer.drawPlayArea(ctx, cards, centerX, centerY, canvasWidth);
                 
-                // Draw last play info
+                // Draw last play info - FIXED: Use highlightRadius instead of undefined tableRadius
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                 ctx.font = 'bold 16px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
-                ctx.fillText(`Last Play: ${gameState.lastPlay.player}`, centerX, centerY - tableRadius - 20);
+                ctx.fillText(`Last Play: ${gameState.lastPlay.player}`, centerX, centerY - highlightRadius - 30);
             } else {
                 // Draw "No play yet" text
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
@@ -934,9 +1016,37 @@
                 ctx.fillText('No cards played yet', centerX, centerY);
             }
             
-            // Draw player's hand - centered
+            // Draw bot animations
+            if (gameState.botAnimations && gameState.botAnimations.length > 0) {
+                cardRenderer.drawBotAnimations(ctx, gameState.botAnimations);
+                
+                // Update animations
+                gameState.botAnimations = cardRenderer.updateAnimations(gameState.botAnimations);
+            }
+            
+            // Draw regular animations
+            gameState.animations = gameState.animations.filter(anim => {
+                const progress = Math.min(1, (Date.now() - anim.startTime) / anim.duration);
+                
+                if (progress >= 1) return false; // Animation finished
+                
+                // Calculate current position with easing
+                const easedProgress = progress < 0.5 
+                    ? 2 * progress * progress 
+                    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                
+                const currentX = anim.fromX + (anim.toX - anim.fromX) * easedProgress;
+                const currentY = anim.fromY + (anim.toY - anim.fromY) * easedProgress;
+                
+                // Draw card at animated position
+                cardRenderer.drawCardFace(ctx, anim.card, currentX, currentY, false, false, true, true);
+                
+                return true; // Keep animation
+            });
+            
+            // Draw player's hand - centered (MOVED HIGHER FOR BIGGER CARDS)
             if (gameState.playerHand.length > 0) {
-                const handY = canvasHeight - 140;
+                const handY = canvasHeight - 150; // MOVED 20px HIGHER
                 // Calculate start position to center the hand
                 const totalCardWidth = Math.min(gameState.playerHand.length * 70, canvasWidth * 0.8);
                 const handStartX = (canvasWidth - totalCardWidth) / 2;
@@ -958,13 +1068,13 @@
                 ctx.fillText('Your Hand', canvasWidth / 2, handY - 30);
             }
             
-            // Draw bots' hands - UPDATED POSITIONS
+            // Draw bots' hands
             if (gameState.players.length > 0) {
                 // Bot 1 (top-left)
                 const bot1 = gameState.players.find(p => p.name.includes('Bot 1'));
                 if (bot1) {
-                    const bot1X = 50; // Position for Bot 1
-                    const bot1Y = 80;
+                    const bot1X = 40; // Adjusted for better spacing
+                    const bot1Y = 100; // Adjusted for better spacing
                     cardRenderer.drawBotHand(
                         ctx,
                         bot1.cards_remaining,
@@ -983,8 +1093,8 @@
                 // Bot 2 (top-right) - MOVED MORE TO THE LEFT
                 const bot2 = gameState.players.find(p => p.name.includes('Bot 2'));
                 if (bot2) {
-                    const bot2X = canvasWidth - 360; // MOVED MORE LEFT (was 220)
-                    const bot2Y = 80;
+                    const bot2X = canvasWidth - 360; // MOVED MORE LEFT
+                    const bot2Y = 100; // Adjusted for better spacing
                     cardRenderer.drawBotHand(
                         ctx,
                         bot2.cards_remaining,
@@ -1003,8 +1113,8 @@
                 // Bot 3 (bottom-left)
                 const bot3 = gameState.players.find(p => p.name.includes('Bot 3'));
                 if (bot3) {
-                    const bot3X = 50; // Position for Bot 3
-                    const bot3Y = canvasHeight - 300;
+                    const bot3X = 40; // Adjusted for better spacing
+                    const bot3Y = canvasHeight - 280; // Adjusted for better spacing
                     cardRenderer.drawBotHand(
                         ctx,
                         bot3.cards_remaining,
@@ -1021,26 +1131,6 @@
                 }
             }
             
-            // Draw animations - SIMPLIFIED VERSION
-            gameState.animations = gameState.animations.filter(anim => {
-                const progress = Math.min(1, (Date.now() - anim.startTime) / anim.duration);
-                
-                if (progress >= 1) return false; // Animation finished
-                
-                // Calculate current position with easing
-                const easedProgress = progress < 0.5 
-                    ? 2 * progress * progress 
-                    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-                
-                const currentX = anim.fromX + (anim.toX - anim.fromX) * easedProgress;
-                const currentY = anim.fromY + (anim.toY - anim.fromY) * easedProgress;
-                
-                // Draw card at animated position
-                cardRenderer.drawCardFace(ctx, anim.card, currentX, currentY, false, false, true);
-                
-                return true; // Keep animation
-            });
-            
             // Continue render loop
             requestAnimationFrame(render);
         }
@@ -1049,6 +1139,46 @@
         let isProcessingClick = false;
         let lastClickTime = 0;
         const CLICK_DEBOUNCE_MS = 300;
+        
+        // Handle mouse move for hover effects
+        let hoverUpdateTimeout = null;
+        gameCanvas.addEventListener('mousemove', (e) => {
+            if (!gameState.isPlayerTurn || gameState.gameOver) return;
+            
+            const rect = gameCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            let foundHover = -1;
+            for (const cardRect of gameState.cardRects) {
+                if (x >= cardRect.x && x <= cardRect.x + cardRect.width &&
+                    y >= cardRect.y && y <= cardRect.y + cardRect.height) {
+                    foundHover = cardRect.index;
+                    break;
+                }
+            }
+            
+            if (gameState.hoveredCard !== foundHover) {
+                gameState.hoveredCard = foundHover;
+                
+                // Debounce rapid hover changes for performance
+                if (hoverUpdateTimeout) {
+                    clearTimeout(hoverUpdateTimeout);
+                }
+                hoverUpdateTimeout = setTimeout(() => {
+                    // Force immediate re-render for smooth hover
+                    requestAnimationFrame(render);
+                }, 16); // ~60fps
+            }
+        });
+        
+        // Clear hover when mouse leaves canvas
+        gameCanvas.addEventListener('mouseleave', () => {
+            if (gameState.hoveredCard !== -1) {
+                gameState.hoveredCard = -1;
+                requestAnimationFrame(render);
+            }
+        });
         
         // Handle mouse down
         gameCanvas.addEventListener('mousedown', function(e) {
@@ -1128,28 +1258,6 @@
                 }, 50);
             }
         }
-        
-        // Handle mouse move for hover effects
-        gameCanvas.addEventListener('mousemove', (e) => {
-            if (!gameState.isPlayerTurn) return;
-            
-            const rect = gameCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            let foundHover = -1;
-            for (const cardRect of gameState.cardRects) {
-                if (x >= cardRect.x && x <= cardRect.x + cardRect.width &&
-                    y >= cardRect.y && y <= cardRect.y + cardRect.height) {
-                    foundHover = cardRect.index;
-                    break;
-                }
-            }
-            
-            if (gameState.hoveredCard !== foundHover) {
-                gameState.hoveredCard = foundHover;
-            }
-        });
 
         // Toggle card selection
         function toggleCardSelection(index) {
@@ -1332,57 +1440,72 @@
                         gameState.currentPlayer.includes('Bot') && !gameState.isProcessingBotMove) {
                         
                         // Process bot move after a short delay
-                        setTimeout(() => {
-                            processBotMove();
+                        setTimeout(async () => {
+                            try {
+                                gameState.isProcessingBotMove = true;
+                                
+                                const response = await fetch('/api/bot_move', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({
+                                        session_id: gameState.sessionId
+                                    })
+                                });
+                                
+                                const data = await response.json();
+                                console.log("🤖 Bot move response:", data);
+                                
+                                if (data.success) {
+                                    // Try to extract cards from message for animation
+                                    const message = data.message || '';
+                                    if (message.includes('played')) {
+                                        const parts = message.split('played ');
+                                        if (parts.length > 1) {
+                                            const cardsStr = parts[1].replace('.', '');
+                                            const cards = cardsStr.split(' ').filter(c => c.trim());
+                                            
+                                            // Create animations for each card
+                                            cards.forEach(card => {
+                                                if (card) {
+                                                    createBotAnimation(gameState.currentPlayer, card);
+                                                }
+                                            });
+                                            
+                                            // Wait for animations to complete before updating state
+                                            setTimeout(() => {
+                                                gameState.isProcessingBotMove = false;
+                                                updateGameState();
+                                            }, 1000); // Wait 1 second for animation
+                                        } else {
+                                            // No animation, just update
+                                            setTimeout(() => {
+                                                gameState.isProcessingBotMove = false;
+                                                updateGameState();
+                                            }, 800);
+                                        }
+                                    } else {
+                                        // Bot passed or no play
+                                        setTimeout(() => {
+                                            gameState.isProcessingBotMove = false;
+                                            updateGameState();
+                                        }, 800);
+                                    }
+                                    
+                                    // Add log for bot's play
+                                    addLog('bot', data.message);
+                                } else {
+                                    console.error("❌ Bot move failed:", data.error);
+                                    gameState.isProcessingBotMove = false;
+                                }
+                            } catch (error) {
+                                console.error('Error processing bot move:', error);
+                                gameState.isProcessingBotMove = false;
+                            }
                         }, 1500);
                     }
                 }
             } catch (error) {
                 console.error('Error updating game state:', error);
-            }
-        }
-
-        // Process bot move - NEW FUNCTION
-        async function processBotMove() {
-            console.log("🤖 Processing bot move...");
-            
-            if (!gameState.sessionId || gameState.gameOver) {
-                console.log("❌ Can't process bot move: No session or game over");
-                return;
-            }
-            
-            try {
-                gameState.isProcessingBotMove = true;
-                
-                const response = await fetch('/api/bot_move', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        session_id: gameState.sessionId
-                    })
-                });
-                
-                const data = await response.json();
-                console.log("🤖 Bot move response:", data);
-                
-                if (data.success) {
-                    // Add log for bot's play
-                    if (data.message) {
-                        addLog('bot', data.message);
-                    }
-                    
-                    // Update game state after bot move
-                    setTimeout(() => {
-                        gameState.isProcessingBotMove = false;
-                        updateGameState();
-                    }, 1000);
-                } else {
-                    console.error("❌ Bot move failed:", data.error);
-                    gameState.isProcessingBotMove = false;
-                }
-            } catch (error) {
-                console.error('Error processing bot move:', error);
-                gameState.isProcessingBotMove = false;
             }
         }
 
