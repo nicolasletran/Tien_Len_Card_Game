@@ -94,21 +94,21 @@
         }
 
         .game-canvas {
-            width: 100%;
-            height: 600px;
-            background: rgba(0, 30, 60, 0.5);
-            border-radius: 15px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            cursor: pointer;
-        }
-
+        width: 100%;
+        height: 700px; /* Increased from 600px */
+        background: rgba(0, 30, 60, 0.3); /* Lighter background to show more board */
+        border-radius: 20px; /* Larger radius */
+        margin-bottom: 20px;
+        border: 2px solid rgba(255, 215, 0, 0.3); /* Thicker border */
+        position: relative;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Added shadow */
+    }
         canvas {
             display: block;
             width: 100% !important;
@@ -255,6 +255,11 @@
             animation: pulse-red 2s infinite;
         }
 
+        .side-btn.three-spades-warning {
+            background: linear-gradient(145deg, #D69E2E, #B7791F);
+            animation: pulse-orange 1s infinite;
+        }
+
         @keyframes pulse-green {
             0% { box-shadow: 0 0 0 0 rgba(56, 161, 105, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(56, 161, 105, 0); }
@@ -265,6 +270,12 @@
             0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(229, 62, 62, 0); }
             100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
+        }
+
+        @keyframes pulse-orange {
+            0% { box-shadow: 0 0 0 0 rgba(214, 158, 46, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(214, 158, 46, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(214, 158, 46, 0); }
         }
 
         .side-btn i {
@@ -376,6 +387,8 @@
             align-items: center;
             font-weight: bold;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            position: relative;
         }
 
         .selected-card.red {
@@ -386,6 +399,29 @@
             color: #000000;
         }
 
+        .selected-card.three-spades {
+            border: 3px solid #00FF00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+            transform: scale(1.05);
+        }
+
+        .selected-card.three-spades::after {
+            content: '★';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            color: #00FF00;
+            font-size: 14px;
+            background: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
         .game-info {
             background: rgba(0, 20, 40, 0.8);
             border-radius: 20px;
@@ -393,6 +429,7 @@
             margin-top: 25px;
             border: 2px solid rgba(255, 215, 0, 0.2);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            position: relative;
         }
 
         .info-grid {
@@ -419,6 +456,22 @@
         .info-value {
             color: #FFD700;
             font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .three-spades-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 255, 0, 0.2);
+            color: #00FF00;
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            border: 1px solid #00FF00;
+            display: flex;
+            align-items: center;
+            gap: 5px;
             font-weight: bold;
         }
 
@@ -473,6 +526,11 @@
             to { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.4); }
         }
 
+        @keyframes glow-green {
+            from { box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(0, 255, 0, 0.8), 0 0 30px rgba(0, 255, 0, 0.4); }
+        }
+
         /* === NEW ANIMATIONS === */
         @keyframes fadeOut {
             from { opacity: 1; }
@@ -514,6 +572,11 @@
         .log-entry.winner {
             border-left-color: #FFD700;
             background: rgba(255, 215, 0, 0.1);
+        }
+
+        .log-entry.three-spades {
+            border-left-color: #00FF00;
+            background: rgba(0, 255, 0, 0.1);
         }
 
         .log-timestamp {
@@ -584,6 +647,148 @@
             animation: glow 1.5s infinite alternate;
         }
 
+        .glow-green {
+            animation: glow-green 1.5s infinite alternate;
+        }
+
+        /* First Play Warning */
+        .first-play-warning {
+            background: linear-gradient(145deg, rgba(255, 215, 0, 0.2), rgba(255, 100, 100, 0.3)) !important;
+            border: 2px solid #FF0000 !important;
+            color: #FF0000 !important;
+        }
+
+        /* Round Starter Indicator */
+        .round-starter {
+            border: 3px solid #4ECDC4 !important;
+            background: rgba(78, 205, 196, 0.1) !important;
+        }
+
+        /* 3♠ Highlight Styles */
+        .three-spades-highlight {
+            animation: glow-green 2s infinite alternate;
+            border: 3px solid #00FF00 !important;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5) !important;
+        }
+                /* Bot name styling */
+        .bot-name-display {
+            position: absolute;
+            background: rgba(0, 20, 40, 0.9);
+            color: #FFD700;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Current bot turn highlight */
+        .bot-name-display.current-turn {
+            color: #00FF00;
+            border-color: #00FF00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            animation: pulse-green 2s infinite;
+        }
+
+        /* === NEW STYLES FOR CARD SPACING AND AUTO WIN === */
+        
+        /* Better card selection visual */
+        .card-selection-indicator {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+            z-index: 10;
+        }
+
+        /* Automatic win notification */
+        .auto-win-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(145deg, rgba(255, 215, 0, 0.95), rgba(255, 140, 0, 0.95));
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 15px;
+            border: 3px solid #FF0000;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 1000;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: autoWinPulse 2s infinite;
+            display: none;
+        }
+
+        @keyframes autoWinPulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* Card count indicator */
+        .card-count-badge {
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+            background: #FF0000;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* Card scroll indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 14px;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 15px;
+            border-radius: 10px;
+            display: none;
+            z-index: 50;
+        }
+
+        /* Game state indicator */
+        .game-state-indicator {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: rgba(0, 20, 40, 0.9);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            font-size: 12px;
+            max-width: 200px;
+            z-index: 100;
+        }
+
         /* Responsive design */
         @media (max-width: 1200px) {
             .game-container {
@@ -623,6 +828,31 @@
             .side-btn {
                 padding: 10px 12px;
                 font-size: 0.85em;
+            }
+            
+            .auto-win-notification {
+                font-size: 16px;
+                padding: 10px 20px;
+                top: 10px;
+            }
+        }
+
+        /* For very small screens */
+        @media (max-width: 480px) {
+            .game-canvas {
+                height: 500px;
+            }
+            
+            .side-controls {
+                bottom: 150px;
+                right: 10px;
+                padding: 8px;
+                min-width: 100px;
+            }
+            
+            .side-btn {
+                padding: 8px 10px;
+                font-size: 0.8em;
             }
         }
     </style>
@@ -784,10 +1014,21 @@
             animations: [],
             botAnimations: [],
             isProcessingBotMove: false,
-            hasShownWinCelebration: false,  // FIX: Track if win celebration shown
-            botPassNotifications: new Set(), // FIX: Track bot pass notifications
-            botTurnDelay: 1500,              // FIX: Delay between bot turns
-            botTurnTimeout: null             // FIX: Timeout for bot turns
+            hasShownWinCelebration: false,
+            hasShownAutoWin: false, // NEW: Track auto win display
+            botPassNotifications: new Set(),
+            botTurnDelay: 1500,
+            botTurnTimeout: null,
+            // NEW FIELDS FOR 3♠ RULE
+            current_player_index: 0,
+            first_player_index: 0,
+            round_number: 1,
+            rules_info: {
+                requires_three_spades: false,
+                three_spades_player: null,
+                can_start_round: false
+            },
+            autoWinner: null // NEW: Track automatic winner
         };
 
         // ============ DEBUG FUNCTIONS ============
@@ -796,14 +1037,18 @@
             console.log("Is player turn:", gameState.isPlayerTurn);
             console.log("Game over:", gameState.gameOver);
             console.log("Current player:", gameState.currentPlayer);
+            console.log("Current player index:", gameState.current_player_index);
+            console.log("First player index:", gameState.first_player_index);
+            console.log("Round number:", gameState.round_number);
+            console.log("Requires 3♠:", gameState.rules_info.requires_three_spades);
+            console.log("3♠ player:", gameState.rules_info.three_spades_player);
             console.log("Your hand size:", gameState.playerHand.length);
             console.log("Selected cards:", gameState.selectedCards);
             console.log("Selected cards count:", gameState.selectedCards.length);
             console.log("Card rects count:", gameState.cardRects.length);
             console.log("Last play:", gameState.lastPlay);
             console.log("Bot animations:", gameState.botAnimations.length);
-            console.log("Has shown win celebration:", gameState.hasShownWinCelebration);
-            console.log("Bot pass notifications:", Array.from(gameState.botPassNotifications));
+            console.log("Auto winner:", gameState.autoWinner);
             console.log("=======================");
         }
 
@@ -815,6 +1060,9 @@
                 console.log("Is player turn:", data.state.is_player_turn);
                 console.log("Current player:", data.state.current_player);
                 console.log("Game over:", data.state.game_over);
+                console.log("Round:", data.state.summary?.round);
+                console.log("Requires 3♠:", data.state.rules_info?.requires_three_spades);
+                console.log("Auto winner:", data.state.summary?.auto_winner);
             }
             console.log("====================");
         }
@@ -871,6 +1119,12 @@
             const animation = cardRenderer.createBotPlayAnimation(botName, card, fromX, fromY, toX, toY);
             gameState.botAnimations.push(animation);
             
+            // Special animation for 3♠
+            if (card.rank === 3 && card.suit === '♠') {
+                const threeSpadesAnim = cardRenderer.createThreeSpadesAnimation(card, toX, toY);
+                gameState.botAnimations.push(threeSpadesAnim);
+            }
+            
             // Play sound effect
             playCardSound();
         }
@@ -899,7 +1153,7 @@
             }
         }
 
-        // Bot pass notification function - FIXED: Prevents duplicates
+        // Bot pass notification function
         function showBotPassNotification(botName) {
             // Check if there's already a notification for this bot
             const existingNotification = document.querySelector(`.bot-pass-notification[data-bot="${botName}"]`);
@@ -910,7 +1164,7 @@
             // Create notification element
             const notification = document.createElement('div');
             notification.className = 'bot-pass-notification';
-            notification.setAttribute('data-bot', botName); // Mark which bot this is for
+            notification.setAttribute('data-bot', botName);
             notification.style.cssText = `
                 position: fixed;
                 top: 50%;
@@ -946,46 +1200,46 @@
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
-                // Remove from tracking set after animation completes
                 gameState.botPassNotifications.delete(botName);
             }, 2000);
         }
 
-        // Add CSS animation for the notification
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes popInOut {
-                0% {
-                    opacity: 0;
-                    transform: translate(-50%, -50%) scale(0.5);
-                }
-                20% {
-                    opacity: 1;
-                    transform: translate(-50%, -50%) scale(1.1);
-                }
-                30% {
-                    transform: translate(-50%, -50%) scale(1);
-                }
-                70% {
-                    opacity: 1;
-                    transform: translate(-50%, -50%) scale(1);
-                }
-                100% {
-                    opacity: 0;
-                    transform: translate(-50%, -50%) scale(0.5);
-                }
+        // Show automatic win notification
+        function showAutomaticWinNotification(playerName, reason) {
+            const existingNotification = document.getElementById('autoWinNotification');
+            if (existingNotification) {
+                return; // Already showing
             }
-        `;
-        document.head.appendChild(style);
+            
+            const notification = document.createElement('div');
+            notification.className = 'auto-win-notification';
+            notification.id = 'autoWinNotification';
+            notification.innerHTML = `
+                <div style="font-size: 24px; margin-bottom: 5px;">🏆 AUTOMATIC WIN! 🏆</div>
+                <div style="font-weight: bold; font-size: 22px;">${playerName}</div>
+                <div style="font-size: 18px; margin-top: 5px; color: #8B0000;">${reason}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            notification.style.display = 'block';
+            
+            // Play victory sound
+            playVictorySound();
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
 
-        // Show player win celebration - FIXED: Only shows once
+        // Show player win celebration
         function showPlayerWinCelebration() {
-            // Check if already showing
             if (document.getElementById('winCelebration')) {
                 return;
             }
             
-            // Create celebration overlay
             const celebration = document.createElement('div');
             celebration.id = 'winCelebration';
             celebration.style.cssText = `
@@ -1016,7 +1270,6 @@
                     position: relative;
                     overflow: hidden;
                 ">
-                    <!-- Confetti background -->
                     <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none;">
                         <div class="confetti"></div>
                         <div class="confetti"></div>
@@ -1085,7 +1338,6 @@
                 </div>
             `;
             
-            // Add CSS animations for confetti
             const winStyle = document.createElement('style');
             winStyle.textContent = `
                 @keyframes fadeIn {
@@ -1122,18 +1374,15 @@
             document.head.appendChild(winStyle);
             document.body.appendChild(celebration);
             
-            // Play victory sound
             playVictorySound();
         }
 
-        // Show bot win announcement - FIXED: Only shows once
+        // Show bot win announcement
         function showBotWinCelebration(botName) {
-            // Check if already showing
             if (document.getElementById('botWinCelebration')) {
                 return;
             }
             
-            // Create bot win overlay
             const celebration = document.createElement('div');
             celebration.id = 'botWinCelebration';
             celebration.style.cssText = `
@@ -1164,7 +1413,6 @@
                     position: relative;
                     overflow: hidden;
                 ">
-                    <!-- Robot animation -->
                     <div style="font-size: 80px; margin-bottom: 20px; animation: robotBounce 1s infinite;">
                         🤖
                     </div>
@@ -1242,7 +1490,6 @@
                 </div>
             `;
             
-            // Add CSS animations
             const botStyle = document.createElement('style');
             botStyle.textContent += `
                 @keyframes robotBounce {
@@ -1255,7 +1502,6 @@
             document.head.appendChild(botStyle);
             document.body.appendChild(celebration);
             
-            // Play bot win sound
             playBotWinSound();
         }
 
@@ -1276,29 +1522,11 @@
             }
         }
 
-        // Add fadeOut animation to existing style or create new
-        function addFadeOutAnimation() {
-            if (!document.getElementById('fadeOutStyle')) {
-                const style = document.createElement('style');
-                style.id = 'fadeOutStyle';
-                style.textContent = `
-                    @keyframes fadeOut {
-                        from { opacity: 1; }
-                        to { opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        }
-
         // Sound effects
         function playVictorySound() {
             try {
-                // Create victory sound
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Play a victory fanfare
-                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                const notes = [523.25, 659.25, 783.99, 1046.50];
                 let time = audioContext.currentTime;
                 
                 notes.forEach((frequency, index) => {
@@ -1318,7 +1546,7 @@
                     oscillator.start(time);
                     oscillator.stop(time + 0.5);
                     
-                    time += 0.15; // Stagger the notes
+                    time += 0.15;
                 });
             } catch (e) {
                 console.log("Audio not supported");
@@ -1327,16 +1555,14 @@
 
         function playBotWinSound() {
             try {
-                // Create robotic defeat sound
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
                 
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
                 
-                oscillator.frequency.value = 349.23; // F4
+                oscillator.frequency.value = 349.23;
                 oscillator.type = 'sawtooth';
                 
                 gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
@@ -1370,18 +1596,16 @@
             gameState.canvas = gameCanvas;
             gameState.ctx = gameCanvas.getContext('2d');
             
-            // Set canvas size
             const container = gameCanvas.parentElement;
             gameCanvas.width = container.clientWidth;
             gameCanvas.height = container.clientHeight;
             
             console.log(`Canvas initialized: ${gameCanvas.width}x${gameCanvas.height}`);
             
-            // Start render loop
             requestAnimationFrame(render);
         }
 
-        // Render game - UPDATED WITH ANIMATIONS
+        // Render game - UPDATED WITH CORRECT BOT PLACEMENT AND NAMES
         function render() {
             const ctx = gameState.ctx;
             const canvas = gameState.canvas;
@@ -1391,27 +1615,27 @@
             // Clear canvas
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
             
-            // Draw background gradient
-            const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
-            gradient.addColorStop(0, 'rgba(12, 59, 46, 0.3)');
-            gradient.addColorStop(1, 'rgba(26, 95, 122, 0.3)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-            
-            // Draw full rectangular game board with pattern
-            const boardPadding = 5; // Space from canvas edges
+            // ===== DRAW LARGER GAME BOARD =====
+            const boardPadding = 15;
             const boardX = boardPadding;
             const boardY = boardPadding;
             const boardWidth = canvasWidth - (boardPadding * 2);
             const boardHeight = canvasHeight - (boardPadding * 2);
 
-            // Draw board background
-            ctx.fillStyle = 'rgba(80, 0, 0, 0.85)'; // Dark red
+            // Draw board background with rich gradient
+            const boardGradient = ctx.createLinearGradient(
+                boardX, boardY, 
+                boardX + boardWidth, boardY + boardHeight
+            );
+            boardGradient.addColorStop(0, 'rgba(100, 0, 0, 0.95)');
+            boardGradient.addColorStop(0.5, 'rgba(80, 0, 20, 0.95)');
+            boardGradient.addColorStop(1, 'rgba(60, 0, 0, 0.95)');
+
+            ctx.fillStyle = boardGradient;
             ctx.beginPath();
             if (ctx.roundRect) {
                 ctx.roundRect(boardX, boardY, boardWidth, boardHeight, 20);
             } else {
-                // Fallback for rounded rectangle
                 const radius = 20;
                 ctx.moveTo(boardX + radius, boardY);
                 ctx.lineTo(boardX + boardWidth - radius, boardY);
@@ -1426,60 +1650,94 @@
             ctx.closePath();
             ctx.fill();
 
-            // Board border
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
-            ctx.lineWidth = 4;
+            // Thicker border with inner glow
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.9)';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+            
+            // Inner border
+            ctx.strokeStyle = 'rgba(255, 255, 100, 0.4)';
+            ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Add elegant pattern to the board
-            ctx.save();
-            ctx.globalAlpha = 0.1;
+            // Draw board title
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.95)';
+            ctx.font = 'bold 26px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            
+            // Title with glow effect
+            ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
+            ctx.shadowBlur = 8;
+            ctx.fillText('🎴 TIEN LEN MIEN NAM 🎴', canvasWidth / 2, boardY + 15);
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
 
-            // Diamond grid pattern
-            const gridSize = 40;
-            for (let x = boardX; x < boardX + boardWidth; x += gridSize) {
-                for (let y = boardY; y < boardY + boardHeight; y += gridSize) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, y + gridSize/2);
-                    ctx.lineTo(x + gridSize/2, y);
-                    ctx.lineTo(x + gridSize, y + gridSize/2);
-                    ctx.lineTo(x + gridSize/2, y + gridSize);
-                    ctx.closePath();
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                }
-            }
-
-            // Subtle radial gradient in center
-            const centerX = canvasWidth / 2;
-            const centerY = canvasHeight / 2;
-            const centerGradient = ctx.createRadialGradient(
-                centerX, centerY, 50,
-                centerX, centerY, Math.min(boardWidth, boardHeight) / 3
-            );
-            centerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
-            centerGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = centerGradient;
-            ctx.fillRect(boardX, boardY, boardWidth, boardHeight);
-
-            ctx.restore();
-
-            // Draw center highlight circle (optional)
-            const highlightRadius = Math.min(boardWidth, boardHeight) * 0.15;
-
+            // Add subtle decorative patterns in corners
             ctx.save();
             ctx.globalAlpha = 0.15;
+            ctx.fillStyle = '#FFD700';
+            
+            // Corner decorations
+            const cornerSize = 15;
+            // Top-left
+            ctx.beginPath();
+            ctx.moveTo(boardX + cornerSize, boardY + 5);
+            ctx.lineTo(boardX + 5, boardY + cornerSize);
+            ctx.lineTo(boardX + cornerSize, boardY + cornerSize);
+            ctx.fill();
+            // Top-right
+            ctx.beginPath();
+            ctx.moveTo(boardX + boardWidth - cornerSize, boardY + 5);
+            ctx.lineTo(boardX + boardWidth - 5, boardY + cornerSize);
+            ctx.lineTo(boardX + boardWidth - cornerSize, boardY + cornerSize);
+            ctx.fill();
+            // Bottom-left
+            ctx.beginPath();
+            ctx.moveTo(boardX + cornerSize, boardY + boardHeight - 5);
+            ctx.lineTo(boardX + 5, boardY + boardHeight - cornerSize);
+            ctx.lineTo(boardX + cornerSize, boardY + boardHeight - cornerSize);
+            ctx.fill();
+            // Bottom-right
+            ctx.beginPath();
+            ctx.moveTo(boardX + boardWidth - cornerSize, boardY + boardHeight - 5);
+            ctx.lineTo(boardX + boardWidth - 5, boardY + boardHeight - cornerSize);
+            ctx.lineTo(boardX + boardWidth - cornerSize, boardY + boardHeight - cornerSize);
+            ctx.fill();
+            
+            ctx.restore();
+
+            // Add subtle pattern to board background
+            ctx.save();
+            ctx.globalAlpha = 0.08;
+            const patternSize = 60;
+            for (let x = boardX; x < boardX + boardWidth; x += patternSize) {
+                for (let y = boardY; y < boardY + boardHeight; y += patternSize) {
+                    ctx.beginPath();
+                    // Draw simple flower pattern
+                    ctx.arc(x + patternSize/2, y + patternSize/2, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+
+            // Center highlight area
+            const centerX = canvasWidth / 2;
+            const centerY = canvasHeight / 2;
+            const highlightRadius = Math.min(boardWidth, boardHeight) * 0.18;
+
+            ctx.save();
+            ctx.globalAlpha = 0.2;
             ctx.fillStyle = '#FFD700';
             ctx.beginPath();
             ctx.arc(centerX, centerY, highlightRadius, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
             
-            // Draw last play if exists
+            // ===== DRAW LAST PLAY (IF ANY) =====
             if (gameState.lastPlay && gameState.lastPlay.cards && gameState.lastPlay.cards.length > 0) {
                 const cards = gameState.lastPlay.cards.map(cardStr => {
-                    // Convert card string to card object
                     const suit = cardStr.slice(-1);
                     const rankStr = cardStr.slice(0, -1);
                     const rankMap = {
@@ -1496,26 +1754,73 @@
                 
                 cardRenderer.drawPlayArea(ctx, cards, centerX, centerY, canvasWidth);
                 
-                // Draw last play info - FIXED: Use highlightRadius instead of undefined tableRadius
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                // Draw last play info
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(centerX - 140, centerY - highlightRadius - 40, 280, 30, 10);
+                } else {
+                    const rectX = centerX - 140;
+                    const rectY = centerY - highlightRadius - 40;
+                    const radius = 10;
+                    ctx.moveTo(rectX + radius, rectY);
+                    ctx.lineTo(rectX + 280 - radius, rectY);
+                    ctx.quadraticCurveTo(rectX + 280, rectY, rectX + 280, rectY + radius);
+                    ctx.lineTo(rectX + 280, rectY + 30 - radius);
+                    ctx.quadraticCurveTo(rectX + 280, rectY + 30, rectX + 280 - radius, rectY + 30);
+                    ctx.lineTo(rectX + radius, rectY + 30);
+                    ctx.quadraticCurveTo(rectX, rectY + 30, rectX, rectY + 30 - radius);
+                    ctx.lineTo(rectX, rectY + radius);
+                    ctx.quadraticCurveTo(rectX, rectY, rectX + radius, rectY);
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#FFD700';
                 ctx.font = 'bold 16px Arial';
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(`Last Play: ${gameState.lastPlay.player}`, centerX, centerY - highlightRadius - 30);
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`Last Play: ${gameState.lastPlay.player}`, centerX, centerY - highlightRadius - 25);
             } else {
                 // Draw "No play yet" text
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                ctx.font = 'italic 18px Arial';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(centerX - 150, centerY - 30, 300, 60, 15);
+                } else {
+                    const rectX = centerX - 150;
+                    const rectY = centerY - 30;
+                    const radius = 15;
+                    ctx.moveTo(rectX + radius, rectY);
+                    ctx.lineTo(rectX + 300 - radius, rectY);
+                    ctx.quadraticCurveTo(rectX + 300, rectY, rectX + 300, rectY + radius);
+                    ctx.lineTo(rectX + 300, rectY + 60 - radius);
+                    ctx.quadraticCurveTo(rectX + 300, rectY + 60, rectX + 300 - radius, rectY + 60);
+                    ctx.lineTo(rectX + radius, rectY + 60);
+                    ctx.quadraticCurveTo(rectX, rectY + 60, rectX, rectY + 60 - radius);
+                    ctx.lineTo(rectX, rectY + radius);
+                    ctx.quadraticCurveTo(rectX, rectY, rectX + radius, rectY);
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#4ECDC4';
+                ctx.font = 'italic 22px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('No cards played yet', centerX, centerY);
+                ctx.fillText('No cards played yet', centerX, centerY - 10);
+                
+                ctx.font = '16px Arial';
+                ctx.fillStyle = '#A0AEC0';
+                ctx.fillText('Start the round!', centerX, centerY + 15);
             }
+            
+            // Draw game info overlay
+            cardRenderer.drawGameInfo(ctx, gameState, canvasWidth, canvasHeight);
             
             // Draw bot animations
             if (gameState.botAnimations && gameState.botAnimations.length > 0) {
                 cardRenderer.drawBotAnimations(ctx, gameState.botAnimations);
-                
-                // Update animations
                 gameState.botAnimations = cardRenderer.updateAnimations(gameState.botAnimations);
             }
             
@@ -1523,9 +1828,8 @@
             gameState.animations = gameState.animations.filter(anim => {
                 const progress = Math.min(1, (Date.now() - anim.startTime) / anim.duration);
                 
-                if (progress >= 1) return false; // Animation finished
+                if (progress >= 1) return false;
                 
-                // Calculate current position with easing
                 const easedProgress = progress < 0.5 
                     ? 2 * progress * progress 
                     : 1 - Math.pow(-2 * progress + 2, 2) / 2;
@@ -1533,103 +1837,107 @@
                 const currentX = anim.fromX + (anim.toX - anim.fromX) * easedProgress;
                 const currentY = anim.fromY + (anim.toY - anim.fromY) * easedProgress;
                 
-                // Draw card at animated position
                 cardRenderer.drawCardFace(ctx, anim.card, currentX, currentY, false, false, true, true);
                 
-                return true; // Keep animation
+                return true;
             });
             
-            // Draw player's hand - centered (MOVED HIGHER FOR BIGGER CARDS)
+            // ===== DRAW PLAYER'S HAND (ALWAYS CENTERED) =====
             if (gameState.playerHand.length > 0) {
-                const handY = canvasHeight - 150; // MOVED 20px HIGHER
-                // Calculate start position to center the hand
-                const totalCardWidth = Math.min(gameState.playerHand.length * 70, canvasWidth * 0.8);
-                const handStartX = (canvasWidth - totalCardWidth) / 2;
+                const handY = canvasHeight - 130; // Position near bottom
                 
+                // Draw player's hand - cards.js handles centering
                 gameState.cardRects = cardRenderer.drawHand(
                     ctx,
                     gameState.playerHand,
-                    handStartX,
                     handY,
                     gameState.selectedCards,
                     gameState.hoveredCard,
                     canvasWidth
                 );
-                
-                // Draw "Your Hand" label
-                ctx.fillStyle = '#FFD700';
-                ctx.font = 'bold 18px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('Your Hand', canvasWidth / 2, handY - 30);
             }
             
-            // Draw bots' hands
-            if (gameState.players.length > 0) {
-                // Bot 1 (top-left)
-                const bot1 = gameState.players.find(p => p.name.includes('Bot 1'));
-                if (bot1) {
-                    const bot1X = 40; // Adjusted for better spacing
-                    const bot1Y = 100; // Adjusted for better spacing
+            // ===== DRAW BOTS' HANDS WITH CORRECT PLACEMENT AND NAMES =====
+            if (gameState.players && gameState.players.length >= 4) {
+                // Get bot players (indices 1-3)
+                const bot1 = gameState.players[1]; // Bot 1
+                const bot2 = gameState.players[2]; // Bot 2  
+                const bot3 = gameState.players[3]; // Bot 3
+                
+                // Draw Bot 1 (Top-center) - JUST DRAW THE HAND, NAME IS ALREADY INCLUDED
+                if (bot1 && bot1.name) {
+                    const bot1X = canvasWidth / 2 - 370;
+                    const bot1Y = 120;
                     cardRenderer.drawBotHand(
                         ctx,
                         bot1.cards_remaining,
                         bot1X,
                         bot1Y,
                         bot1.name === gameState.currentPlayer,
-                        canvasWidth
+                        canvasWidth,
+                        1 // Bot index for name display
                     );
-                    
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 14px Arial';
-                    ctx.textAlign = 'left';
-                    ctx.fillText(bot1.name, bot1X, bot1Y - 20);
                 }
                 
-                // Bot 2 (top-right) - MOVED MORE TO THE LEFT
-                const bot2 = gameState.players.find(p => p.name.includes('Bot 2'));
-                if (bot2) {
-                    const bot2X = canvasWidth - 360; // MOVED MORE LEFT
-                    const bot2Y = 100; // Adjusted for better spacing
+                // Draw Bot 2 (Right side) - JUST DRAW THE HAND, NAME IS ALREADY INCLUDED
+                if (bot2 && bot2.name) {
+                    const bot2X = canvasWidth - 220;
+                    const bot2Y = canvasHeight / 2 - 140;
                     cardRenderer.drawBotHand(
                         ctx,
                         bot2.cards_remaining,
                         bot2X,
                         bot2Y,
                         bot2.name === gameState.currentPlayer,
-                        canvasWidth
+                        canvasWidth,
+                        2 // Bot index for name display
                     );
-                    
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 14px Arial';
-                    ctx.textAlign = 'right';
-                    ctx.fillText(bot2.name, bot2X + 130, bot2Y - 20);
                 }
                 
-                // Bot 3 (bottom-left)
-                const bot3 = gameState.players.find(p => p.name.includes('Bot 3'));
-                if (bot3) {
-                    const bot3X = 40; // Adjusted for better spacing
-                    const bot3Y = canvasHeight - 280; // Adjusted for better spacing
+                // Draw Bot 3 (Left side) - JUST DRAW THE HAND, NAME IS ALREADY INCLUDED
+                if (bot3 && bot3.name) {
+                    const bot3X = 100;
+                    const bot3Y = canvasHeight / 2 - 60;
                     cardRenderer.drawBotHand(
                         ctx,
                         bot3.cards_remaining,
                         bot3X,
                         bot3Y,
                         bot3.name === gameState.currentPlayer,
-                        canvasWidth
+                        canvasWidth,
+                        3 // Bot index for name display
                     );
-                    
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 14px Arial';
-                    ctx.textAlign = 'left';
-                    ctx.fillText(bot3.name, bot3X, bot3Y - 20);
                 }
             }
             
-            // Continue render loop
+
+            
+            // Draw current turn indicator
+            if (gameState.currentPlayer) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(centerX - 150, boardY + 105, 300, 25, 8);
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = gameState.isPlayerTurn ? '#00FF00' : '#FFD700';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText(`Turn: ${gameState.currentPlayer}`, centerX, boardY + 120);
+                
+                // Add blinking effect for current player's turn
+                if (gameState.isPlayerTurn && Math.floor(Date.now() / 500) % 2 === 0) {
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(centerX - 70, boardY + 120, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+            
             requestAnimationFrame(render);
         }
-
         // Event handling
         let isProcessingClick = false;
         let lastClickTime = 0;
@@ -1656,14 +1964,12 @@
             if (gameState.hoveredCard !== foundHover) {
                 gameState.hoveredCard = foundHover;
                 
-                // Debounce rapid hover changes for performance
                 if (hoverUpdateTimeout) {
                     clearTimeout(hoverUpdateTimeout);
                 }
                 hoverUpdateTimeout = setTimeout(() => {
-                    // Force immediate re-render for smooth hover
                     requestAnimationFrame(render);
-                }, 16); // ~60fps
+                }, 16);
             }
         });
         
@@ -1695,27 +2001,18 @@
             return false;
         });
         
-        // Handle canvas click
+        // Handle canvas click - UPDATED with more forgiving click detection
         function handleCanvasClick(clientX, clientY, e) {
-            console.log("=== CLICK DETECTED ===");
-            console.log("Click at:", clientX, clientY);
-            console.log("Is player turn?", gameState.isPlayerTurn);
-            console.log("Game over?", gameState.gameOver);
-            debugGameState();
-            
             if (!gameState.isPlayerTurn || gameState.gameOver) {
-                console.log("❌ Can't click: Not player turn or game over");
                 return;
             }
             
-            // Debounce clicks
             const now = Date.now();
             if (now - lastClickTime < CLICK_DEBOUNCE_MS) {
                 return;
             }
             lastClickTime = now;
             
-            // Prevent default behaviors
             if (e) {
                 e.stopPropagation();
                 e.preventDefault();
@@ -1725,23 +2022,21 @@
             const x = clientX - rect.left;
             const y = clientY - rect.top;
             
-            console.log("Canvas coordinates:", x, y);
-            console.log("Card rects available:", gameState.cardRects.length);
-            
-            // Check if clicked on a card
             let clickedIndex = -1;
+            
+            // Make click detection more forgiving - check a slightly larger area
+            // Add 10px margin around card for easier clicking
+            const clickMargin = 10;
             for (let i = 0; i < gameState.cardRects.length; i++) {
                 const cardRect = gameState.cardRects[i];
-                if (x >= cardRect.x && x <= cardRect.x + cardRect.width &&
-                    y >= cardRect.y && y <= cardRect.y + cardRect.height) {
+                if (x >= cardRect.x - clickMargin && x <= cardRect.x + cardRect.width + clickMargin &&
+                    y >= cardRect.y - clickMargin && y <= cardRect.y + cardRect.height + clickMargin) {
                     clickedIndex = i;
-                    console.log(`✅ Found card at index ${i}, rect:`, cardRect);
                     break;
                 }
             }
             
             if (clickedIndex === -1) {
-                console.log("❌ No card clicked");
                 return;
             }
             
@@ -1754,42 +2049,42 @@
             }
         }
 
-        // Toggle card selection
+        // Toggle card selection - UPDATED WITH 3♠ HIGHLIGHTING
         function toggleCardSelection(index) {
-            console.log("🃏 Toggling card selection, index:", index);
-            console.log("Current selected:", gameState.selectedCards);
-            
             if (!gameState.isPlayerTurn || gameState.gameOver) {
-                console.log("❌ Can't select: Not player turn or game over");
                 return;
             }
             
             const card = gameState.playerHand[index];
             if (!card) {
-                console.log("❌ No card at index:", index);
                 return;
             }
             
-            // Check if already selected
             const isSelected = gameState.selectedCards.includes(index);
             
             if (isSelected) {
-                // Deselect
                 gameState.selectedCards = gameState.selectedCards.filter(i => i !== index);
                 addLog('system', `Deselected: ${card.display}`);
-                console.log(`✅ Deselected card ${index}: ${card.display}`);
             } else {
-                // Select
                 gameState.selectedCards.push(index);
                 addLog('system', `Selected: ${card.display}`);
-                console.log(`✅ Selected card ${index}: ${card.display}`);
+                
+                // Special log for 3♠
+                if (card.rank === 3 && card.suit === '♠') {
+                    addLog('three-spades', `★ Selected 3♠! This card must be included in first play.`);
+                }
+                
+                // Special log for 2s (automatic win card)
+                if (card.rank === 2) {
+                    addLog('system', `✨ Selected 2 (automatic win card)`);
+                }
             }
             
             updateSelectedCardsDisplay();
-            console.log("New selected cards:", gameState.selectedCards);
+            updateSideButtons();
         }
 
-        // Update selected cards display
+        // Update selected cards display - UPDATED WITH 3♠ HIGHLIGHTING
         function updateSelectedCardsDisplay() {
             selectedCardsDiv.innerHTML = '';
             
@@ -1798,24 +2093,89 @@
                 return;
             }
             
-            // Sort selected cards for consistent display
             const sortedSelected = [...gameState.selectedCards].sort((a, b) => a - b);
+            
+            // Check if we have 3♠ selected
+            let hasThreeSpades = false;
+            sortedSelected.forEach(cardIndex => {
+                const card = gameState.playerHand[cardIndex];
+                if (card && card.rank === 3 && card.suit === '♠') {
+                    hasThreeSpades = true;
+                }
+            });
+            
+            // Add warning if 3♠ is required but not selected
+            if (gameState.rules_info && gameState.rules_info.requires_three_spades && 
+                gameState.current_player_index === 0 && !hasThreeSpades && sortedSelected.length > 0) {
+                const warning = document.createElement('div');
+                warning.style.cssText = `
+                    width: 100%;
+                    background: rgba(255, 0, 0, 0.1);
+                    color: #FF0000;
+                    padding: 10px;
+                    border-radius: 8px;
+                    margin-bottom: 10px;
+                    text-align: center;
+                    font-weight: bold;
+                    border: 1px solid #FF0000;
+                `;
+                warning.innerHTML = `<i class="fas fa-exclamation-triangle"></i> First play must include 3♠!`;
+                selectedCardsDiv.appendChild(warning);
+            }
             
             sortedSelected.forEach(cardIndex => {
                 const card = gameState.playerHand[cardIndex];
                 if (!card) return;
                 
                 const cardDiv = document.createElement('div');
-                cardDiv.className = `selected-card ${card.suit === '♥' || card.suit === '♦' ? 'red' : 'black'}`;
+                const isThreeSpades = (card.rank === 3 && card.suit === '♠');
+                const isTwo = (card.rank === 2);
+                cardDiv.className = `selected-card ${card.suit === '♥' || card.suit === '♦' ? 'red' : 'black'} ${isThreeSpades ? 'three-spades' : ''} ${isTwo ? 'two-card' : ''}`;
                 
                 const rankSymbol = cardRenderer.rankToSymbol(card.rank);
                 cardDiv.innerHTML = `
-                    <div style="font-size: 16px;">${rankSymbol}</div>
+                    <div style="font-size: 16px; ${isThreeSpades ? 'color: #00AA00; font-weight: bold;' : (isTwo ? 'color: #DAA520; font-weight: bold;' : '')}">
+                        ${rankSymbol}
+                    </div>
                     <div style="font-size: 20px;">${card.suit}</div>
                 `;
                 
+                // Add special indicator for automatic win cards
+                if (isThreeSpades || isTwo) {
+                    const indicator = document.createElement('div');
+                    indicator.style.cssText = `
+                        position: absolute;
+                        top: -8px;
+                        right: -8px;
+                        background: ${isThreeSpades ? '#00FF00' : '#FFD700'};
+                        color: #000;
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 12px;
+                        font-weight: bold;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    `;
+                    indicator.textContent = isThreeSpades ? '♠' : '2';
+                    cardDiv.appendChild(indicator);
+                }
+                
                 selectedCardsDiv.appendChild(cardDiv);
             });
+            
+            const countDiv = document.createElement('div');
+            countDiv.style.cssText = `
+                width: 100%;
+                text-align: center;
+                color: #FFD700;
+                margin-top: 10px;
+                font-weight: bold;
+            `;
+            countDiv.textContent = `${gameState.selectedCards.length} card${gameState.selectedCards.length !== 1 ? 's' : ''} selected`;
+            selectedCardsDiv.appendChild(countDiv);
         }
 
         // Show start modal
@@ -1830,7 +2190,7 @@
             startModal.style.display = 'none';
         }
 
-        // Start game - FIXED VERSION
+        // Start game
         async function startGame() {
             const playerName = playerNameInput.value.trim() || 'Player';
             hideStartModal();
@@ -1849,23 +2209,28 @@
                 if (data.success) {
                     gameState.sessionId = data.session_id;
                     gameState.gameId = data.game_id;
-                    
-                    // Reset win celebration flag
                     gameState.hasShownWinCelebration = false;
+                    gameState.hasShownAutoWin = false;
+                    gameState.autoWinner = null;
                     
                     addLog('system', `Welcome, ${playerName}! Game started.`);
-                    addLog('system', 'Good luck! You are playing against 3 AI bots.');
+                    
+                    // Check for 3♠ player
+                    if (data.state && data.state.rules_info) {
+                        const threeSpadesPlayer = data.state.rules_info.three_spades_player;
+                        if (threeSpadesPlayer && threeSpadesPlayer.includes('You')) {
+                            addLog('three-spades', `✨ You have 3♠! You must include it in your first play.`);
+                        } else if (threeSpadesPlayer) {
+                            addLog('system', `✨ ${threeSpadesPlayer} has 3♠ and will start the game.`);
+                        }
+                    }
                     
                     updateGameState();
                     
-                    // Enable controls
                     document.getElementById('btnHint').disabled = false;
                     document.getElementById('btnStart').disabled = true;
-                    
-                    // Show side controls
                     sideControls.style.display = 'flex';
                     
-                    // Start auto-refresh
                     setInterval(updateGameState, 2000);
                 } else {
                     addLog('system', `Error: ${data.error}`);
@@ -1875,56 +2240,86 @@
             }
         }
 
-        // Update game state - FIXED VERSION (with proper bot turn sequencing)
+        // Update game state - UPDATED WITH AUTO WIN HANDLING
         async function updateGameState() {
-            console.log("🔄 updateGameState called");
-            
             if (!gameState.sessionId || gameState.isProcessingBotMove) {
-                console.log("❌ Can't update: No session or processing bot move");
                 return;
             }
             
             try {
-                console.log(`📡 Fetching state for session: ${gameState.sessionId}`);
                 const response = await fetch(`/api/get_state?session_id=${gameState.sessionId}`);
                 
-                // Check if server is responding
                 if (!response.ok) {
                     if (response.status === 0 || response.status >= 500) {
-                        console.error("🚨 Server appears to be down!");
                         addLog('system', '⚠️ Server connection lost. Try restarting the game.');
                         return;
                     }
                 }
                 
                 const data = await response.json();
-                
-                console.log("📊 Raw API response:", data);
                 debugAPIResponse(data);
                 
                 if (data.success) {
                     const state = data.state;
                     
-                    console.log("🎮 Updating state:");
-                    console.log("- Is player turn:", state.is_player_turn);
-                    console.log("- Current player:", state.current_player);
-                    console.log("- Game over:", state.game_over);
-                    console.log("- Hand size:", state.player_hand ? state.player_hand.length : 0);
+                    // ===== AUTOMATIC WIN HANDLING =====
+                    if (state.summary && state.summary.auto_winner) {
+                        // Automatic win detected!
+                        const autoWinner = state.summary.auto_winner;
+                        
+                        // Update game state with auto win info
+                        gameState.autoWinner = autoWinner;
+                        gameState.gameOver = true;
+                        gameState.isPlayerTurn = false;
+                        
+                        // Show automatic win notification (only once)
+                        if (!gameState.hasShownAutoWin) {
+                            showAutomaticWinNotification(autoWinner.player, autoWinner.reason);
+                            gameState.hasShownAutoWin = true;
+                            
+                            // Log the automatic win
+                            addLog('winner', `🎉 ${autoWinner.player} wins automatically! (${autoWinner.reason})`);
+                        }
+                        
+                        // Disable all player controls
+                        disablePlayControls();
+                        
+                        // Don't process further updates for auto-win
+                        return;
+                    } else {
+                        // Clear auto win state if no auto winner
+                        gameState.autoWinner = null;
+                        gameState.hasShownAutoWin = false;
+                    }
+                    // ===== END AUTOMATIC WIN HANDLING =====
                     
-                    // Update game state
+                    // Update game state (normal case)
                     gameState.players = state.players || [];
                     gameState.playerHand = state.player_hand || [];
                     gameState.lastPlay = state.last_play;
                     gameState.gameOver = state.game_over || false;
                     gameState.isPlayerTurn = state.is_player_turn || false;
                     gameState.currentPlayer = state.current_player;
+                    gameState.current_player_index = state.current_player_index || 0;
+                    gameState.first_player_index = state.first_player_index || 0;
+                    gameState.round_number = state.summary?.round || 1;
+                    gameState.rules_info = state.rules_info || {};
+                    
+                    // Update cardRenderer game state
+                    cardRenderer.updateGameState({
+                        round_number: gameState.round_number,
+                        rules_info: gameState.rules_info,
+                        current_player_index: gameState.current_player_index,
+                        first_player_index: gameState.first_player_index,
+                        current_player: gameState.currentPlayer,
+                        is_player_turn: gameState.isPlayerTurn,
+                        auto_winner: gameState.autoWinner
+                    });
                     
                     // Update UI
                     updatePlayersPanel();
                     updateGameInfo(state.summary);
                     updateGameStatus();
-                    
-                    // Update side buttons
                     updateSideButtons();
                     
                     // Update log with recent plays
@@ -1937,34 +2332,33 @@
                         });
                     }
                     
-                    // Check for winner - FIXED: Only show once
-                    if (state.winner && !gameState.hasShownWinCelebration) {
+                    // Check for normal winner (not auto win)
+                    if (state.winner && !gameState.hasShownWinCelebration && !gameState.autoWinner) {
                         addLog('winner', `🎉 ${state.winner} wins the game! 🎉`);
                         disableGameControls();
-                        
-                        // Mark that we've shown the celebration
                         gameState.hasShownWinCelebration = true;
                         
-                        // Show celebration based on who won
                         setTimeout(() => {
                             if (state.winner.includes('You') || state.winner.includes('Player')) {
                                 showPlayerWinCelebration();
                             } else {
                                 showBotWinCelebration(state.winner);
                             }
-                        }, 1000); // Wait 1 second before showing celebration
+                        }, 1000);
                     }
                     
-                    // FIXED: Process bot moves with proper sequencing
-                    if (!gameState.isPlayerTurn && !gameState.gameOver && gameState.currentPlayer && 
-                        gameState.currentPlayer.includes('Bot') && !gameState.isProcessingBotMove) {
+                    // Process bot moves (only if no auto win)
+                    if (!gameState.autoWinner && 
+                        !gameState.isPlayerTurn && 
+                        !gameState.gameOver && 
+                        gameState.currentPlayer && 
+                        gameState.currentPlayer.includes('Bot') && 
+                        !gameState.isProcessingBotMove) {
                         
-                        // Clear any existing timeout
                         if (gameState.botTurnTimeout) {
                             clearTimeout(gameState.botTurnTimeout);
                         }
                         
-                        // Process bot move after a delay
                         gameState.botTurnTimeout = setTimeout(async () => {
                             try {
                                 gameState.isProcessingBotMove = true;
@@ -1978,24 +2372,17 @@
                                 });
                                 
                                 const data = await response.json();
-                                console.log("🤖 Bot move response:", data);
                                 
                                 if (data.success) {
-                                    // Check if bot passed - SHOW NOTIFICATION (with duplicate check)
                                     if (data.message && data.message.includes('passed')) {
-                                        // Check if we haven't already shown notification for this bot
                                         if (!gameState.botPassNotifications.has(gameState.currentPlayer)) {
-                                            // Show bot pass notification
                                             showBotPassNotification(gameState.currentPlayer);
-                                            // Mark that we've shown it
                                             gameState.botPassNotifications.add(gameState.currentPlayer);
                                         }
                                     } else {
-                                        // Bot played cards, clear pass notifications for next round
                                         gameState.botPassNotifications.clear();
                                     }
                                     
-                                    // Try to extract cards from message for animation
                                     const message = data.message || '';
                                     if (message.includes('played')) {
                                         const parts = message.split('played ');
@@ -2003,56 +2390,47 @@
                                             const cardsStr = parts[1].replace('.', '');
                                             const cards = cardsStr.split(' ').filter(c => c.trim());
                                             
-                                            // Create animations for each card
                                             cards.forEach(card => {
                                                 if (card) {
                                                     createBotAnimation(gameState.currentPlayer, card);
                                                 }
                                             });
                                             
-                                            // Wait for animations to complete before updating state
                                             setTimeout(() => {
                                                 gameState.isProcessingBotMove = false;
                                                 updateGameState();
                                             }, 1000);
                                         } else {
-                                            // No animation, just update after delay
                                             setTimeout(() => {
                                                 gameState.isProcessingBotMove = false;
                                                 updateGameState();
                                             }, 800);
                                         }
                                     } else {
-                                        // Bot passed or no play - add delay before next update
                                         setTimeout(() => {
                                             gameState.isProcessingBotMove = false;
                                             updateGameState();
                                         }, gameState.botTurnDelay);
                                     }
                                     
-                                    // Add log for bot's play
                                     addLog('bot', data.message);
                                 } else {
-                                    console.error("❌ Bot move failed:", data.error);
+                                    console.error("Bot move failed:", data.error);
                                     gameState.isProcessingBotMove = false;
-                                    // Still update state after delay
                                     setTimeout(() => updateGameState(), gameState.botTurnDelay);
                                 }
                             } catch (error) {
                                 console.error('Error processing bot move:', error);
                                 gameState.isProcessingBotMove = false;
-                                // Still update state after delay
                                 setTimeout(() => updateGameState(), gameState.botTurnDelay);
                             }
-                        }, gameState.botTurnDelay); // Initial delay before bot move
+                        }, gameState.botTurnDelay);
                     }
                 }
             } catch (error) {
                 console.error('Error updating game state:', error);
                 
-                // Check if it's a connection error
                 if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    console.error("🚨 Server connection failed!");
                     addLog('system', '⚠️ Cannot connect to server. The server may have crashed.');
                 } else {
                     addLog('system', `Error: ${error.message}`);
@@ -2060,40 +2438,65 @@
             }
         }
 
-        // Update side buttons state
+        // Update side buttons state - UPDATED WITH 3♠ WARNING
         function updateSideButtons() {
-            console.log("🎛️ updateSideButtons called");
-            console.log("- Is player turn:", gameState.isPlayerTurn);
-            console.log("- Selected cards:", gameState.selectedCards.length);
-            console.log("- Game over:", gameState.gameOver);
-            
-            if (gameState.isPlayerTurn && !gameState.gameOver) {
+            if (gameState.isPlayerTurn && !gameState.gameOver && !gameState.autoWinner) {
                 const canPlay = gameState.selectedCards.length > 0;
-                console.log(`✅ Player turn - Play button: ${canPlay ? "enabled" : "disabled"}`);
+                let playButtonText = "Play Cards";
+                let buttonClass = "play";
+                
+                // Check if player must play 3♠
+                if (gameState.rules_info && gameState.rules_info.requires_three_spades && 
+                    gameState.current_player_index === 0) {
+                    
+                    // Check if selected cards contain 3♠
+                    const hasThreeSpades = gameState.selectedCards.some(cardIndex => {
+                        const card = gameState.playerHand[cardIndex];
+                        return card && card.rank === 3 && card.suit === '♠';
+                    });
+                    
+                    if (canPlay && !hasThreeSpades) {
+                        playButtonText = "Must include 3♠!";
+                        buttonClass = "three-spades-warning";
+                        btnPlay.style.background = 'linear-gradient(145deg, #D69E2E, #B7791F)';
+                        btnPlay.style.animation = 'pulse-orange 1s infinite';
+                    } else if (canPlay && hasThreeSpades) {
+                        playButtonText = "Play Cards (3♠ included ✓)";
+                        buttonClass = "play";
+                        btnPlay.style.background = 'linear-gradient(145deg, #38A169, #2F855A)';
+                        btnPlay.style.animation = 'pulse-green 2s infinite';
+                    } else {
+                        playButtonText = "Must play 3♠";
+                        buttonClass = "";
+                        btnPlay.style.background = 'linear-gradient(145deg, #2A4365, #1A365D)';
+                        btnPlay.style.animation = 'none';
+                    }
+                } else {
+                    btnPlay.style.background = 'linear-gradient(145deg, #38A169, #2F855A)';
+                    btnPlay.style.animation = canPlay ? 'pulse-green 2s infinite' : 'none';
+                }
+                
+                // Update button text and class
+                btnPlay.innerHTML = `<i class="fas fa-play"></i> ${playButtonText}`;
+                btnPlay.className = `side-btn ${buttonClass}`;
                 
                 btnPlay.disabled = !canPlay;
                 btnPass.disabled = false;
-                
-                // Add pulsing animation when it's player's turn
-                btnPlay.classList.add('play');
-                btnPass.classList.add('pass');
             } else {
-                console.log("❌ Not player turn or game over - disabling buttons");
                 btnPlay.disabled = true;
                 btnPass.disabled = true;
-                
-                // Remove pulsing animation
-                btnPlay.classList.remove('play');
-                btnPass.classList.remove('pass');
+                btnPlay.innerHTML = `<i class="fas fa-play"></i> Play Cards`;
+                btnPlay.style.background = 'linear-gradient(145deg, #38A169, #2F855A)';
+                btnPlay.style.animation = 'none';
+                btnPlay.className = 'side-btn';
             }
             
-            // Enable restart button if game has started
             if (gameState.sessionId) {
                 document.getElementById('btnRestart').disabled = false;
             }
         }
 
-        // Update players panel
+        // Update players panel - UPDATED WITH 3♠ HIGHLIGHTING
         function updatePlayersPanel() {
             playersPanel.innerHTML = '';
             
@@ -2105,70 +2508,144 @@
                     playerCard.classList.add('current-turn');
                 }
                 
+                // Highlight 3♠ holder
+                if (gameState.rules_info && gameState.rules_info.three_spades_player === player.name) {
+                    playerCard.style.border = '3px solid #00FF00';
+                    playerCard.style.boxShadow = '0 0 15px rgba(0, 255, 0, 0.3)';
+                }
+                
                 if (player.has_won) {
                     playerCard.classList.add('winner');
                 }
                 
                 const icon = player.name.includes('Bot') ? 'fa-robot' : 'fa-user';
+                const isThreeSpadesHolder = gameState.rules_info && gameState.rules_info.three_spades_player === player.name;
+                const isRoundStarter = gameState.first_player_index !== undefined && 
+                                      gameState.players[gameState.first_player_index] && 
+                                      gameState.players[gameState.first_player_index].name === player.name;
                 
                 playerCard.innerHTML = `
                     <div class="player-name">
                         <i class="fas ${icon}"></i> ${player.name}
+                        ${isThreeSpadesHolder ? 
+                          '<span style="color: #00FF00; margin-left: 5px;"><i class="fas fa-star"></i> 3♠</span>' : ''}
                     </div>
                     <div class="player-cards">
                         <i class="fas fa-cards"></i> ${player.cards_remaining} cards
                     </div>
                     ${player.has_won ? '<div class="player-status"><i class="fas fa-trophy"></i> WINNER!</div>' : ''}
                     ${player.name === gameState.currentPlayer ? '<div class="player-status"><i class="fas fa-play-circle"></i> Current Turn</div>' : ''}
+                    ${isRoundStarter ? '<div class="player-status"><i class="fas fa-flag"></i> Starts Round</div>' : ''}
                 `;
                 
                 playersPanel.appendChild(playerCard);
             });
         }
 
-        // Update game info
+        // Update game info - UPDATED WITH 3♠ INDICATOR
         function updateGameInfo(summary) {
             if (summary) {
                 roundNumber.textContent = summary.round || '-';
                 cardsLeft.textContent = summary.current_player_cards || '-';
+                
+                // Update game status based on auto win
+                if (summary.auto_winner) {
+                    gameStatus.textContent = `🎉 ${summary.auto_winner.player} wins automatically!`;
+                    gameStatus.style.color = '#FFD700';
+                }
+                
+                // Add or update 3♠ indicator
+                if (summary.three_spades_player) {
+                    let indicator = document.getElementById('threeSpadesIndicator');
+                    if (!indicator) {
+                        indicator = document.createElement('div');
+                        indicator.id = 'threeSpadesIndicator';
+                        indicator.className = 'three-spades-indicator';
+                        document.querySelector('.game-info').appendChild(indicator);
+                    }
+                    indicator.innerHTML = `<i class="fas fa-star"></i> 3♠: ${summary.three_spades_player}`;
+                    indicator.style.display = 'flex';
+                } else {
+                    const indicator = document.getElementById('threeSpadesIndicator');
+                    if (indicator) {
+                        indicator.style.display = 'none';
+                    }
+                }
             }
         }
 
-        // Update game status
+        // Update game status - UPDATED WITH 3♠ RULE
         function updateGameStatus() {
-            if (gameState.gameOver) {
-                gameStatus.textContent = 'Game Over';
-                gameStatus.style.color = '#FF6B6B';
+            if (gameState.gameOver || gameState.autoWinner) {
+                if (gameState.autoWinner) {
+                    gameStatus.textContent = `🎉 ${gameState.autoWinner.player} wins automatically!`;
+                    gameStatus.style.color = '#FFD700';
+                } else {
+                    gameStatus.textContent = 'Game Over';
+                    gameStatus.style.color = '#FF6B6B';
+                }
                 gameStatus.classList.remove('pulse');
             } else if (gameState.isPlayerTurn) {
-                gameStatus.textContent = 'Your Turn';
-                gameStatus.style.color = '#4ECDC4';
+                // Check if player must play 3♠ (first play of first game)
+                if (gameState.rules_info && gameState.rules_info.requires_three_spades && 
+                    gameState.current_player_index === 0) {
+                    gameStatus.textContent = 'Your Turn (Must play 3♠!)';
+                    gameStatus.style.color = '#FF0000';
+                    gameStatus.style.textShadow = '0 0 10px rgba(255, 0, 0, 0.5)';
+                } else if (gameState.rules_info && gameState.rules_info.can_start_round && 
+                           gameState.current_player_index === 0) {
+                    gameStatus.textContent = 'Your Turn (You start this round)';
+                    gameStatus.style.color = '#4ECDC4';
+                } else {
+                    gameStatus.textContent = 'Your Turn';
+                    gameStatus.style.color = '#4ECDC4';
+                }
                 gameStatus.classList.add('pulse');
             } else {
-                gameStatus.textContent = `Waiting for ${gameState.currentPlayer || 'Bots'}`;
+                // Show who has 3♠ if it's first round
+                if (gameState.rules_info && gameState.rules_info.requires_three_spades) {
+                    gameStatus.textContent = `Waiting for ${gameState.currentPlayer || 'Bots'} (${gameState.rules_info.three_spades_player} has 3♠)`;
+                } else {
+                    gameStatus.textContent = `Waiting for ${gameState.currentPlayer || 'Bots'}`;
+                }
                 gameStatus.style.color = '#A0AEC0';
                 gameStatus.classList.remove('pulse');
             }
         }
 
-        // Play selected cards - FIXED VERSION
+        // Play selected cards - UPDATED WITH 3♠ VALIDATION
         async function playSelectedCards() {
-            console.log("🎮 playSelectedCards called");
-            console.log("Selected cards:", gameState.selectedCards.length);
-            console.log("Is player turn:", gameState.isPlayerTurn);
-            
             if (gameState.selectedCards.length === 0 || !gameState.isPlayerTurn) {
                 addLog('system', 'Please select cards to play');
-                console.log("❌ Can't play: No cards selected or not player turn");
                 return;
+            }
+            
+            // Check if 3♠ is required
+            if (gameState.rules_info && gameState.rules_info.requires_three_spades && 
+                gameState.current_player_index === 0) {
+                
+                const hasThreeSpades = gameState.selectedCards.some(cardIndex => {
+                    const card = gameState.playerHand[cardIndex];
+                    return card && card.rank === 3 && card.suit === '♠';
+                });
+                
+                if (!hasThreeSpades) {
+                    addLog('system', '❌ First play must include 3♠!');
+                    
+                    // Visual feedback
+                    btnPlay.style.animation = 'none';
+                    setTimeout(() => {
+                        btnPlay.style.animation = 'pulse-red 0.5s 3';
+                    }, 10);
+                    
+                    return;
+                }
             }
             
             const cardsToPlay = gameState.selectedCards.map(idx => {
                 const card = gameState.playerHand[idx];
                 return `${cardRenderer.rankToSymbol(card.rank)}${card.suit}`;
             });
-            
-            console.log("Playing cards:", cardsToPlay);
             
             try {
                 const response = await fetch('/api/play_cards', {
@@ -2181,12 +2658,15 @@
                 });
                 
                 const data = await response.json();
-                console.log("Play cards response:", data);
                 
                 if (data.success) {
                     addLog('player', data.message);
                     
-                    // Add animation for played cards
+                    // Special log for 3♠ play
+                    if (cardsToPlay.some(card => card.includes('3♠'))) {
+                        addLog('three-spades', `★ Played with 3♠!`);
+                    }
+                    
                     const centerX = gameState.canvas.width / 2;
                     const centerY = gameState.canvas.height / 2;
                     
@@ -2207,31 +2687,23 @@
                         }
                     });
                     
-                    // Clear selection
                     gameState.selectedCards = [];
                     updateSelectedCardsDisplay();
                     
-                    // Update state after animation
                     setTimeout(() => {
                         updateGameState();
                     }, 800);
                 } else {
                     addLog('system', `Error: ${data.error}`);
-                    console.log("❌ Play cards error:", data.error);
                 }
             } catch (error) {
                 addLog('system', `Network error: ${error}`);
-                console.log("❌ Network error:", error);
             }
         }
 
-        // Pass turn - FIXED VERSION
+        // Pass turn
         async function passTurn() {
-            console.log("🎮 passTurn called");
-            console.log("Is player turn:", gameState.isPlayerTurn);
-            
             if (!gameState.isPlayerTurn) {
-                console.log("❌ Can't pass: Not player turn");
                 return;
             }
             
@@ -2245,22 +2717,18 @@
                 });
                 
                 const data = await response.json();
-                console.log("Pass turn response:", data);
                 
                 if (data.success) {
                     addLog('player', data.message);
                     
-                    // Update state after a short delay
                     setTimeout(() => {
                         updateGameState();
                     }, 800);
                 } else {
                     addLog('system', `Error: ${data.error}`);
-                    console.log("❌ Pass turn error:", data.error);
                 }
             } catch (error) {
                 addLog('system', `Network error: ${error}`);
-                console.log("❌ Network error:", error);
             }
         }
 
@@ -2275,18 +2743,44 @@
                 if (data.success && data.valid_plays && data.valid_plays.length > 0) {
                     hintsList.innerHTML = '';
                     
+                    // Add 3♠ rule info
+                    if (data.requires_three_spades) {
+                        const ruleInfo = document.createElement('div');
+                        ruleInfo.style.cssText = `
+                            padding: 10px;
+                            margin-bottom: 15px;
+                            background: rgba(0, 255, 0, 0.1);
+                            border-radius: 8px;
+                            border-left: 4px solid #00FF00;
+                            color: #00FF00;
+                        `;
+                        ruleInfo.innerHTML = `
+                            <div style="font-weight: bold; margin-bottom: 5px;">
+                                <i class="fas fa-star"></i> First Play Rule:
+                            </div>
+                            <div style="font-size: 0.9em;">
+                                Must include 3♠. ${data.three_spades_player} has 3♠.
+                            </div>
+                        `;
+                        hintsList.appendChild(ruleInfo);
+                    }
+                    
                     data.valid_plays.slice(0, 10).forEach((hint, i) => {
                         const hintItem = document.createElement('div');
                         hintItem.style.padding = '10px';
                         hintItem.style.marginBottom = '5px';
-                        hintItem.style.background = 'rgba(255, 255, 255, 0.1)';
+                        hintItem.style.background = hint.is_valid ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 0, 0, 0.1)';
                         hintItem.style.borderRadius = '8px';
-                        hintItem.style.borderLeft = '4px solid #FFD700';
+                        hintItem.style.borderLeft = `4px solid ${hint.is_valid ? '#FFD700' : '#FF0000'}`;
                         
                         hintItem.innerHTML = `
-                            <div style="font-weight: bold; color: #FFD700;">${i + 1}. ${hint.cards.join(' ')}</div>
+                            <div style="font-weight: bold; color: ${hint.is_valid ? '#FFD700' : '#FF0000'}">
+                                ${i + 1}. ${hint.cards.join(' ')}
+                                ${!hint.is_valid ? ' ❌' : ''}
+                            </div>
                             <div style="font-size: 0.9em; color: #A0AEC0; margin-top: 5px;">
                                 Type: ${hint.type} | Cards: ${hint.count}
+                                ${hint.error ? `<br><span style="color: #FF6B6B;">${hint.error}</span>` : ''}
                             </div>
                         `;
                         
@@ -2307,22 +2801,24 @@
             hintsModal.style.display = 'none';
         }
 
-        // Restart game function - FIXED: Clears all state properly
+        // Restart game function
         async function restartGame() {
-            // Hide any open celebrations
             hideWinCelebration();
             hideBotWinCelebration();
             
-            // Reset the celebration flag
+            // Remove auto win notification if present
+            const autoWinNotification = document.getElementById('autoWinNotification');
+            if (autoWinNotification) {
+                autoWinNotification.remove();
+            }
+            
             gameState.hasShownWinCelebration = false;
-            
-            // Clear bot pass notifications
+            gameState.hasShownAutoWin = false;
             gameState.botPassNotifications.clear();
+            gameState.autoWinner = null;
             
-            // Remove any existing bot pass notifications from DOM
             document.querySelectorAll('.bot-pass-notification').forEach(el => el.remove());
             
-            // Clear bot turn timeout
             if (gameState.botTurnTimeout) {
                 clearTimeout(gameState.botTurnTimeout);
                 gameState.botTurnTimeout = null;
@@ -2349,22 +2845,17 @@
                 if (data.success) {
                     addLog('system', 'Game restarted!');
                     
-                    // Update game state
                     gameState.sessionId = data.session_id;
                     gameState.gameId = data.game_id;
                     
-                    // Clear selections
                     gameState.selectedCards = [];
                     updateSelectedCardsDisplay();
                     
-                    // Update UI
                     updateGameState();
                     
-                    // Enable/disable buttons
                     document.getElementById('btnHint').disabled = false;
                     document.getElementById('btnRestart').disabled = false;
                     
-                    // Clear game log except first message
                     const firstLog = gameLog.firstElementChild;
                     gameLog.innerHTML = '';
                     if (firstLog) {
@@ -2380,21 +2871,39 @@
             }
         }
 
-        // Add log entry - FIXED: Highlights bot passes
+        // Add log entry - UPDATED WITH 3♠ HIGHLIGHTING
         function addLog(type, message) {
             const timestamp = new Date().toLocaleTimeString();
             const logEntry = document.createElement('div');
             logEntry.className = `log-entry ${type}`;
             
+            // Highlight 3♠ plays
+            if (message.includes('3♠') || (type === 'three-spades')) {
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span> 
+                    <span style="color: #00FF00; font-weight: bold;">
+                        <i class="fas fa-star"></i> ${message}
+                    </span>
+                `;
+            }
             // Highlight bot passes
-            if (type === 'bot' && message.includes('passed')) {
+            else if (type === 'bot' && message.includes('passed')) {
                 logEntry.innerHTML = `
                     <span class="log-timestamp">[${timestamp}]</span> 
                     <span style="color: #FF6B6B; font-weight: bold;">
                         <i class="fas fa-forward"></i> ${message}
                     </span>
                 `;
-            } else {
+            }
+            else if (type === 'winner') {
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span> 
+                    <span style="color: #FFD700; font-weight: bold; font-size: 1.1em;">
+                        <i class="fas fa-trophy"></i> ${message}
+                    </span>
+                `;
+            }
+            else {
                 logEntry.innerHTML = `
                     <span class="log-timestamp">[${timestamp}]</span> ${message}
                 `;
@@ -2415,7 +2924,13 @@
             btnPass.disabled = true;
             document.getElementById('btnHint').disabled = true;
         }
-
+        // NEW FUNCTION: Disable only play controls, not restart
+        function disablePlayControls() {
+            btnPlay.disabled = true;
+            btnPass.disabled = true;
+            document.getElementById('btnHint').disabled = true;
+            // Restart button remains enabled
+}
         // Initialize when page loads
         window.addEventListener('load', () => {
             console.log("🎮 Game script loading...");
@@ -2435,6 +2950,9 @@
                 gameCanvas.width = container.clientWidth;
                 gameCanvas.height = container.clientHeight;
                 console.log(`Canvas resized: ${gameCanvas.width}x${gameCanvas.height}`);
+                
+                // Re-render immediately after resize
+                requestAnimationFrame(render);
             });
             
             // ============ DEBUG HELPER FUNCTIONS ============
@@ -2444,6 +2962,7 @@
                 console.log("⚠️ FORCING PLAYER TURN");
                 gameState.isPlayerTurn = true;
                 gameState.currentPlayer = "You";
+                gameState.current_player_index = 0;
                 updateSideButtons();
                 console.log("✅ Player turn forced ON");
                 debugGameState();
@@ -2457,13 +2976,29 @@
                 console.log("✅ Selections cleared");
             }
             
-            // Log that script loaded
-            console.log("🎮 Game script loaded successfully");
-            console.log("🔧 Debug functions available: debugGameState(), forceMyTurn(), clearSelections()");
+            // Add fadeOut animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+                @keyframes popInOut {
+                    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+                    30% { transform: translate(-50%, -50%) scale(1); }
+                    70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                }
+                @keyframes autoWinPulse {
+                    0% { transform: translateX(-50%) scale(1); }
+                    50% { transform: translateX(-50%) scale(1.05); }
+                    100% { transform: translateX(-50%) scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
             
-            /* === ADD THIS LINE HERE === */
-            addFadeOutAnimation();
-            /* ========================== */
+            console.log("🎮 Game script loaded successfully");
         });
     </script>
 </body>

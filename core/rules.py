@@ -1,5 +1,5 @@
 # core/rules.py
-
+from collections import defaultdict
 # -----------------------------
 # Card strength & ordering
 # -----------------------------
@@ -235,21 +235,30 @@ def beats(play, table):
 
     # Check for bombs
     play_is_bomb = play_type in ["quadruple", "consecutive_pairs"] and len(play) >= 4
+    table_is_bomb = table_type in ["quadruple", "consecutive_pairs"] and len(table) >= 4
     
     # Check if table contains any 2
     table_has_two = any(card.rank == 2 or card.rank == 15 for card in table)
     
-    # Bomb logic: bombs can only beat plays containing 2
-    if play_is_bomb:
+    # BOMB LOGIC
+    if play_is_bomb and table_is_bomb:
+        # Bomb vs Bomb comparison - only valid if both are played on 2s
         if table_has_two:
-            # Bomb can beat plays containing 2
+            # Both bombs are on 2s - compare bomb strengths
+            return _compare_bombs(play, table)
+        else:
+            # Can't play bomb on non-2 play
+            return False
+    
+    if play_is_bomb:
+        # Bomb can only beat plays containing 2
+        if table_has_two:
             return True
         else:
-            # Bomb cannot beat plays without 2
             return False
     
     # Non-bomb cannot beat bomb (if bomb was used legally on a 2 play)
-    if not play_is_bomb and table_type in ["quadruple", "consecutive_pairs"] and len(table) >= 4:
+    if not play_is_bomb and table_is_bomb:
         # Check if the bomb was played on a 2
         bomb_was_on_two = any(card.rank == 2 or card.rank == 15 for card in table)
         if bomb_was_on_two:
@@ -299,3 +308,89 @@ def _compare_bombs(bomb1, bomb2):
     bomb2_strength = get_bomb_strength(bomb2)
     
     return bomb1_strength > bomb2_strength
+
+# Add to rules.py after existing functions
+
+def has_six_pairs(cards):
+    """Check if hand has exactly 6 pairs (12 cards)"""
+    if len(cards) != 12:
+        return False
+    
+    rank_groups = defaultdict(list)
+    for card in cards:
+        rank_groups[card.rank].append(card)
+    
+    # Count how many ranks have exactly 2 cards
+    pair_count = 0
+    for cards_list in rank_groups.values():
+        if len(cards_list) == 2:
+            pair_count += 1
+    
+    return pair_count == 6
+
+def has_five_consecutive_pairs(cards):
+    """Check if hand has 5 consecutive pairs (10 cards)"""
+    if len(cards) != 10:
+        return False
+    
+    # Group by rank
+    rank_groups = defaultdict(list)
+    for card in cards:
+        rank_groups[card.rank].append(card)
+    
+    # Check each rank has exactly 2 cards
+    for cards_list in rank_groups.values():
+        if len(cards_list) != 2:
+            return False
+    
+    # Get sorted ranks (using card strength for comparison)
+    ranks = sorted([card_strength(cards[0]) // 4 for cards in rank_groups.values()])
+    
+    # Check if ranks are consecutive (5 ranks in a row)
+    if len(ranks) != 5:
+        return False
+    
+    for i in range(4):
+        if ranks[i] + 1 != ranks[i + 1]:
+            return False
+    
+    return True
+
+def has_four_twos(cards):
+    """Check if hand has all four 2s"""
+    twos_count = 0
+    for card in cards:
+        if card.rank == 2:
+            twos_count += 1
+    return twos_count == 4
+
+def has_four_threes(cards):
+    """Check if hand has all four 3s (automatic win in first round)"""
+    threes_count = 0
+    for card in cards:
+        if card.rank == 3:
+            threes_count += 1
+    return threes_count == 4
+
+def check_automatic_win(hand, round_number):
+    """
+    Check if hand qualifies for automatic win
+    Returns: (has_automatic_win, reason)
+    """
+    # Check for four 2s (any round)
+    if has_four_twos(hand):
+        return True, "has all four 2s"
+    
+    # Check for six pairs (any round)
+    if has_six_pairs(hand):
+        return True, "has 6 pairs"
+    
+    # Check for five consecutive pairs (any round)
+    if has_five_consecutive_pairs(hand):
+        return True, "has 5 consecutive pairs"
+    
+    # Check for four 3s (first round only)
+    if round_number == 1 and has_four_threes(hand):
+        return True, "has all four 3s in first round"
+    
+    return False, ""
