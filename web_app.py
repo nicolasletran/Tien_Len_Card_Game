@@ -21,7 +21,7 @@ app.secret_key = os.urandom(24)
 # Then initialize CORS
 CORS(app)  # This should come AFTER app is defined
 
-# -----------------------------
+# --------------------------a---
 # Global exception handler
 # -----------------------------
 
