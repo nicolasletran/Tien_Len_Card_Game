@@ -1,4 +1,46 @@
 // /static/cards.js - COMPLETE FIXED VERSION
+// /static/cards.js - ADD THIS AT THE VERY TOP
+
+// ===== MOBILE DETECTION & OPTIMIZATION =====
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isTablet = /iPad|Android(?!.*Mobile)|Tablet|Silk/i.test(navigator.userAgent);
+
+// Performance optimization flags
+const PERFORMANCE_OPTIMIZATIONS = {
+    isMobile: isMobile || isTablet,
+    reduceAnimations: isMobile || isTablet,
+    simplifyGraphics: isMobile,
+    reduceParticles: isMobile,
+    useLowerQuality: isMobile
+};
+
+console.log(`📱 Device: ${isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} - Optimizations: ${PERFORMANCE_OPTIMIZATIONS.reduceAnimations ? 'ON' : 'OFF'}`);
+
+// Apply optimizations immediately
+if (PERFORMANCE_OPTIMIZATIONS.reduceAnimations) {
+    // These will override the ANIMATIONS constants below
+    window.MOBILE_ANIMATION_SETTINGS = {
+        hover: {
+            lift: 4,           // Reduced from 8
+            scale: 1.03,       // Reduced from 1.05
+            shadowBlur: 8,     // Reduced from 15
+            duration: 100      // Reduced from 150
+        },
+        play: {
+            duration: 400,     // Reduced from 800
+            easing: 'ease-out' // Simpler easing
+        },
+        threeSpades: {
+            glowBlur: 10,      // Reduced from 20
+            pulseDuration: 1000 // Reduced from 2000
+        },
+        autoWinCard: {
+            glowBlur: 15,      // Reduced from 25
+            pulseDuration: 800 // Reduced from 1500
+        }
+    };
+}
+// ===== END MOBILE OPTIMIZATION =====
 const cardRenderer = {
     // Animation constants
     ANIMATIONS: {

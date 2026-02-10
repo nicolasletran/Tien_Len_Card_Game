@@ -1017,7 +1017,7 @@
             hasShownWinCelebration: false,
             hasShownAutoWin: false, // NEW: Track auto win display
             botPassNotifications: new Set(),
-            botTurnDelay: 1500,
+            botTurnDelay: 900,
             botTurnTimeout: null,
             // NEW FIELDS FOR 3♠ RULE
             current_player_index: 0,
@@ -2231,7 +2231,7 @@
                     document.getElementById('btnStart').disabled = true;
                     sideControls.style.display = 'flex';
                     
-                    setInterval(updateGameState, 2000);
+                    setInterval(updateGameState, 1000);
                 } else {
                     addLog('system', `Error: ${data.error}`);
                 }
