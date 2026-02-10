@@ -1,4 +1,4 @@
-# web_app.py - UPDATED VERSION for correct restart behavior
+# web_app.py - FIXED VERSION
 from flask import Flask, render_template, request, session, jsonify
 import os
 import json
@@ -6,13 +6,20 @@ import random
 import sys
 import traceback
 import time
+from flask_cors import CORS  # Import CORS
+
+# Import game modules
 from core.game import Game
 from core.player import Player
 from core.card import Card
 from core.rules import beats, is_valid_play, get_play_type, card_strength
 
+# Create Flask app FIRST
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+
+# Then initialize CORS
+CORS(app)  # This should come AFTER app is defined
 
 # -----------------------------
 # Global exception handler
@@ -946,27 +953,7 @@ def internal_error(error):
 # -----------------------------
 # Run app
 # -----------------------------
-if __name__ == '__main__':
-    print("\n" + "="*60)
-    print("🎮 TIEN LEN MIEN NAM SERVER - UPDATED VERSION")
-    print("="*60)
-    print("✅ Features:")
-    print("   - Round 1: 3♠ rule applies (whoever has 3♠ starts)")
-    print("   - Round 2+: Round winner starts (any valid play)")
-    print("   - Restart button: Starts at Round 2 (no 3♠ rule)")
-    print("   - Page refresh: Starts at Round 1 (3♠ rule applies)")
-    print("   - Bombs only beat plays containing 2")
-    print("="*60)
-    print("🌐 Server running at: http://localhost:5000")
-    print("📁 Make sure you have:")
-    print("   - Updated game.py with correct round sequencing")
-    print("   - cards.js in /static directory")
-    print("   - index.html in /templates directory")
-    print("   - All core game modules")
-    print("="*60 + "\n")
-    
-    app.run(debug=True, port=5000, threaded=True)
-    # Add this at the VERY BOTTOM of web_app.py
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
